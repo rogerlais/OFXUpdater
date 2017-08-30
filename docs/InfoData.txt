@@ -1,21 +1,10 @@
+[dicas ofx]
 o ofx possui messages-sets um para cada função 
 a de maior interesse pertence a classe banking e a outra presente é a signom-acho
 para carregar a de interesse o tipo de classe deve ser filtrada
 
-
-
-
-                    System.out.println("TYPE:	" + transaction.getTransactionType().name());
-                    System.out.println("DTPOSTED:	" + transaction.getDatePosted());  //Verificar como o marshalled trata isso
-					System.out.println("TRNAMT:	" + transaction.getAmount());
-					System.out.println("FITID:	" + transaction.getId());  //BUSCAR DIFERENÇA DTPOSTED
-					System.out.println("CHECKNUM:	" + transaction.getCheckNumber());
-					System.out.println("REFNUM:	" + transaction.getReferenceNumber());
-					System.out.println("MEMO:	" + transaction.getMemo());
-                    System.out.println("-------------------------------------");
-
+[mapeamento de dados]
 gerar planilha para mapear as diferenças
 
-					
-					
+[estrutura dúvida]					
 BUSCAR DIFERENÇA ENTRE DTPOSTED E FITID
