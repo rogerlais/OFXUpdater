@@ -1,2 +1,2 @@
-# sesop.NB
-Projetos NB
+# OFXUpdater
+Ajuste dados OFX
