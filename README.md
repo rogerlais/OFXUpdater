@@ -1,2 +1,2 @@
-# sesop.NB
-Projetos NB
+# OFXUpdater
+Aplicação pessoal, sem utilidade pública
