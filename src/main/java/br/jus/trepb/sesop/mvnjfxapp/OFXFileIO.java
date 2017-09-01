@@ -20,8 +20,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import static jdk.nashorn.internal.objects.NativeJava.type;
 
 /**
  *
@@ -30,7 +32,7 @@ import java.util.List;
 public class OFXFileIO {
 
     static public void displayContent(OFXFileHelper ofxH) throws IOException, OFXParseException {
-        
+
         ResponseEnvelope re = ofxH.getOFXContent();
 
         //objeto contendo informações como instituição financeira, idioma, data da conta.
@@ -65,7 +67,44 @@ public class OFXFileIO {
             }
         }
         System.out.println("FIM DA EXIBIÇÃO!");
+    }
 
+    static public String toCSVString(OFXFileHelper ofxH) throws IOException, OFXParseException {
+        ResponseEnvelope re = ofxH.getOFXContent();
+        //objeto contendo informações como instituição financeira, idioma, data da conta.
+        SignonResponse sr = re.getSignonResponse();
+        //como não existe esse get "BankStatementResponse bsr = re.getBankStatementResponse();"
+        //fiz esse codigo para capturar a lista de transações
+        MessageSetType type = MessageSetType.banking;
+        ResponseMessageSet message = re.getMessageSet(type);  //pega apenas o conjunto para a classe filtrada acima
+        if (message != null) {
+            List bank = ((BankingResponseMessageSet) message).getStatementResponses();
+            StringBuilder result = new StringBuilder();
+            result.append("TRNTYPE,DTPOSTED,TRNAMT,FITID,CHECKNUM,REFNUM,MEMO\n\r");
+            for (Iterator it = bank.iterator(); it.hasNext();) {
+                BankStatementResponseTransaction b = (BankStatementResponseTransaction) it.next();
+                List list = b.getMessage().getTransactionList().getTransactions();
+                for (Iterator itT = list.iterator(); itT.hasNext();) {
+                    Transaction transaction = (Transaction) itT.next();
+                    result.append(toCsvRow(transaction));
+                }
+            }
+            return result.toString();
+        } else {
+            return "";
+        }
+    }
+
+    static private String toCsvRow(Transaction transaction) {
+        String result = "";
+        result += transaction.getTransactionType().name() + ",";
+        result += transaction.getDatePosted() + ",";
+        result += transaction.getAmount() + ",";
+        result += transaction.getId() + ",";  //BUSCAR DIFERENÇA DTPOSTED
+        result += transaction.getCheckNumber() + ",";
+        result += "\"" + transaction.getReferenceNumber() + "\",";
+        result += transaction.getMemo() + "\r\n";
+        return result;
     }
 
     public void displayContentFromFile(File ofxFile) throws FileNotFoundException, IOException, OFXParseException {

@@ -2,7 +2,9 @@ package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.webcohesion.ofx4j.io.OFXParseException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -83,25 +85,21 @@ public class FXMLController implements Initializable {
     }
 
     @FXML
-    private void handleButtonExecute(ActionEvent event) {
+    private void handleButtonExecute(ActionEvent event) throws IOException, OFXParseException {
         System.out.println("Iniciando operação!");
         File inFile = new File(this.edtMasterOFX.getText());
         OFXFileHelper ofxF = new OFXFileHelper(inFile);
-        this.displayTransactions(ofxF);   //Leitura do conteudo do OFX
-    }
-
-    private void saveAs( ){
+        OFXFileIO.displayContent(ofxF);
+        this.saveAsCSV("D:\\temp\\out.csv", OFXFileIO.toCSVString(ofxF) );
+        //this.displayTransactions(ofxF);   //Leitura do conteudo do OFX
         
     }
-    
-    private void displayTransactions(OFXFileHelper ofxF) {
-        try {
-            OFXFileIO.displayContent(ofxF);
-        } catch (IOException | OFXParseException ex) {
-            Logger.getLogger(FXMLController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+    private void saveAsCSV( String filename, String content ) throws FileNotFoundException{
+        PrintWriter out = new PrintWriter(filename);
+        out.print(content);
+        out.flush();
+        out.close();
     }
-    
-    
     
 }
