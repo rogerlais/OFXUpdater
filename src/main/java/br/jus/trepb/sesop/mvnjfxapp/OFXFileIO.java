@@ -8,6 +8,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
@@ -20,9 +21,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import static jdk.nashorn.internal.objects.NativeJava.type;
 
 /**
@@ -80,13 +85,13 @@ public class OFXFileIO {
         if (message != null) {
             List bank = ((BankingResponseMessageSet) message).getStatementResponses();
             StringBuilder result = new StringBuilder();
-            result.append("TRNTYPE,DTPOSTED,TRNAMT,FITID,CHECKNUM,REFNUM,MEMO\n\r");
+            result.append("ACCOUNT,OFX-DATE,TRNTYPE,DTPOSTED,TRNAMT,FITID,CHECKNUM,REFNUM,MEMO\n\r");
             for (Iterator it = bank.iterator(); it.hasNext();) {
                 BankStatementResponseTransaction b = (BankStatementResponseTransaction) it.next();
                 List list = b.getMessage().getTransactionList().getTransactions();
                 for (Iterator itT = list.iterator(); itT.hasNext();) {
-                    Transaction transaction = (Transaction) itT.next();
-                    result.append(toCsvRow(transaction));
+                    Transaction transaction = (Transaction) itT.next();                    
+                    result.append(toCsvRow(b.getMessage().getAccount(), sr.getTimestamp(), transaction));
                 }
             }
             return result.toString();
@@ -95,18 +100,31 @@ public class OFXFileIO {
         }
     }
 
-    static private String toCsvRow(Transaction transaction) {
-        String result = "";
+    static private String toCsvRow(BankAccountDetails bankDetail , Date ts, Transaction transaction) {
+        String result = "";        
+        result += bankDetail.getAccountNumber() +  ",";
+        SimpleDateFormat sdf = new SimpleDateFormat("YYYYMMDDHHmmss[ZZ:zzz]" );
+        //sdf.setTimeZone(TimeZone.getTimeZone("BRT"));
+        result += sdf.format(ts)+  ",";
         result += transaction.getTransactionType().name() + ",";
         result += transaction.getDatePosted() + ",";
         result += transaction.getAmount() + ",";
         result += transaction.getId() + ",";  //BUSCAR DIFERENÇA DTPOSTED
         result += transaction.getCheckNumber() + ",";
-        result += "\"" + transaction.getReferenceNumber() + "\",";
+        result += "=\"" + transaction.getReferenceNumber() + "\","; // = para ser interpretado forçadamente como texto
         result += transaction.getMemo() + "\r\n";
         return result;
     }
 
+    /**
+     * Show OFX content
+     * @param ofxFile
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws OFXParseException
+     * Source:  
+     * @see <a href = https://comunidadecc.blogspot.com.br/2010/08/lendo-arquivo-ofx-com-ofx4j.html>
+     */
     public void displayContentFromFile(File ofxFile) throws FileNotFoundException, IOException, OFXParseException {
         AggregateUnmarshaller a = new AggregateUnmarshaller(ResponseEnvelope.class);
         FileInputStream fis = new FileInputStream(ofxFile);

@@ -1,3 +1,10 @@
+[dicas modelling]
+https://en.wikipedia.org/wiki/List_of_Unified_Modeling_Language_tools
+
+Modelio Openn Source
+UMLDesigner
+
+
 [dicas ofx]
 o ofx possui messages-sets um para cada função 
 a de maior interesse pertence a classe banking e a outra presente é a signom-acho

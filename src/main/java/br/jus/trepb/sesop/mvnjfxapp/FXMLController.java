@@ -1,5 +1,6 @@
 package br.jus.trepb.sesop.mvnjfxapp;
 
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.io.OFXParseException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,8 +8,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -17,7 +16,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import java.nio.file.Paths;
-
+import org.apache.commons.io.FilenameUtils;
 
 public class FXMLController implements Initializable {
 
@@ -33,6 +32,7 @@ public class FXMLController implements Initializable {
     private Button btnExec;
     @FXML
     private Button btnCancel;
+    private String lastUsedDir;
 
     @FXML
     private void handleButtonCancel(ActionEvent event) {
@@ -44,12 +44,12 @@ public class FXMLController implements Initializable {
     private void handleButtonLkp(ActionEvent event) {
         System.out.println("Buscando por arquivo de entrada!");
         Button btn = (Button) event.getSource();
-        if (btn.getId() == this.edtMasterOFXLkp.getId()) {
-            //TODO: Buscar por valor para OFX master
+        if (btn.getId().equals(this.edtMasterOFXLkp.getId())) {
+            //Buscar por valor para OFX master
             System.out.println("Buscando por arquivo MASTER!");
             this.edtMasterOFX.setText(this.choiceFilename());
         } else {
-            //TODO: Buscar por valor para OFX Slave
+            //Buscar por valor para OFX Slave
             System.out.println("Buscando por arquivo SLAVE!");
             this.edtSlaveOFX.setText(this.choiceFilename());
         }
@@ -57,7 +57,7 @@ public class FXMLController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
+        //Carregar os parametros iniciais da aplicação
         this.btnExec.setMnemonicParsing(true);
         this.btnCancel.setMnemonicParsing(true);
         if (GlobalConfig.DEBUG) {
@@ -66,8 +66,6 @@ public class FXMLController implements Initializable {
             this.lastUsedDir = "c:\\";
         }
     }
-
-    private String lastUsedDir;
 
     private String choiceFilename() {
         FileChooser fileChooser = new FileChooser();
@@ -87,19 +85,32 @@ public class FXMLController implements Initializable {
     @FXML
     private void handleButtonExecute(ActionEvent event) throws IOException, OFXParseException {
         System.out.println("Iniciando operação!");
-        File inFile = new File(this.edtMasterOFX.getText());
-        OFXFileHelper ofxF = new OFXFileHelper(inFile);
-        OFXFileIO.displayContent(ofxF);
-        this.saveAsCSV("D:\\temp\\out.csv", OFXFileIO.toCSVString(ofxF) );
-        //this.displayTransactions(ofxF);   //Leitura do conteudo do OFX
+        //Cria arquivo para o apontado como master
+        File masterOFX = new File(this.edtMasterOFX.getText());
+        //Prepara nome do ofx de saida para o master
+        String outMasterOFXName = FilenameUtils.removeExtension(masterOFX.getAbsolutePath()) + "_upd.ofx";
         
+        //Instancia o OFX
+        OFXFileHelper ofxF = new OFXFileHelper(masterOFX);
+
+        //Exibe transações no console
+        // TODO remover posteriormente isso    
+        OFXFileIO.displayContent(ofxF);
+        
+        this.saveAsCSV("D:\\temp\\out.csv", OFXFileIO.toCSVString(ofxF));
+
+        //Salva como outro ofx no mesmo camainho com sufixo alterado
+        BankAccountDetails account = ofxF.getBankSetRerponseTransaction(0).getMessage().getAccount();
+        account.setAccountNumber("123456");
+        ofxF.writeTo(outMasterOFXName);
     }
 
-    private void saveAsCSV( String filename, String content ) throws FileNotFoundException{
-        PrintWriter out = new PrintWriter(filename);
-        out.print(content);
-        out.flush();
-        out.close();
+    private void saveAsCSV(String filename, String content) throws FileNotFoundException {
+        try (PrintWriter out = new PrintWriter(filename)) {
+            out.print(content);
+            out.flush();
+            out.close();
+        }
     }
-    
+
 }
