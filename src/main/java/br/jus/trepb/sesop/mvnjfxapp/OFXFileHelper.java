@@ -158,7 +158,7 @@ public class OFXFileHelper {
 
     /**
      * Writes the actual content from OFXContent to the specified filename's Based at link
-     * http://javadevtips.blogspot.com.br/2011/11/creating-mock-ofx-server.html
+     * @see <a href=http://javadevtips.blogspot.com.br/2011/11/creating-mock-ofx-server.html </a>
      *
      * @param filename
      * @throws java.io.FileNotFoundException

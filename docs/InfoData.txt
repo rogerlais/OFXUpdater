@@ -1,3 +1,11 @@
+[dependencia original]
+        <dependency>
+            <groupId>com.webcohesion.ofx4j</groupId>
+            <artifactId>ofx4j</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+
 [dicas modelling]
 https://en.wikipedia.org/wiki/List_of_Unified_Modeling_Language_tools
 
@@ -15,3 +23,13 @@ gerar planilha para mapear as diferenças
 
 [estrutura dúvida]					
 BUSCAR DIFERENÇA ENTRE DTPOSTED E FITID
+
+
+[Dica para repositório a ser exportado]
+https://stackoverflow.com/questions/12069546/how-to-properly-fork-a-maven-project
+
+[submodules]
+https://stackoverflow.com/questions/35534766/how-to-create-submodule-in-existing-repo
+
+[estrategia para a serialização de XML]
+http://docs.oracle.com/javase/7/docs/api/javax/xml/stream/XMLStreamWriter.html

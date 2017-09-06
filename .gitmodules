@@ -1,0 +1,3 @@
+[submodule "ofx4j"]
+	path = ofx4j
+	url = https://github.com/rogerlais/ofx4j.git
