@@ -33,3 +33,9 @@ https://stackoverflow.com/questions/35534766/how-to-create-submodule-in-existing
 
 [estrategia para a serialização de XML]
 http://docs.oracle.com/javase/7/docs/api/javax/xml/stream/XMLStreamWriter.html
+
+
+[para o caso de resucistar o uso do C#]
+https://stackoverflow.com/questions/1764197/what-are-some-ofx-open-financial-exchange-apis
+http://ofx.net/downloads.html
+https://github.com/mocoding-software/ofx

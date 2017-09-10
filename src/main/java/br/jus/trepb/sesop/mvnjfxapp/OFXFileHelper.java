@@ -10,12 +10,10 @@ import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
-import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
 import com.webcohesion.ofx4j.io.AggregateMarshaller;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.OFXParseException;
-import com.webcohesion.ofx4j.io.OFXWriter;
 import com.webcohesion.ofx4j.io.v1.OFXV1Writer;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,29 +50,31 @@ public class OFXFileHelper {
 
     /**
      * A set of transactions from a bank
+     *
      * @param i index from bank
      * @return Container with transaction data BankStatementResponseTransaction
      * @throws IOException
      * @throws OFXParseException
      */
-    public BankStatementResponseTransaction getBankSetRerponseTransaction(int i) throws IOException, OFXParseException{
+    public BankStatementResponseTransaction getBankSetRerponseTransaction(int i) throws IOException, OFXParseException {
         return (BankStatementResponseTransaction) this.getBankResponses().get(i);
     }
-    
+
     /**
      * A set of messages filtered by class "banking" = "conta corrente"
+     *
      * @return
      * @throws IOException
      * @throws OFXParseException
      */
-    protected List<ResponseMessage> getBankResponses() throws IOException, OFXParseException{
+    protected List<ResponseMessage> getBankResponses() throws IOException, OFXParseException {
         ResponseMessageSet message = this.getOFXContent().getMessageSet(MessageSetType.banking);  //pega apenas o conjunto para a classe filtrada acima
-        return message.getResponseMessages();        
+        return message.getResponseMessages();
     }
-    
+
     /**
-     * Read the input file to internal memory
-     * Split the content into several parts and validate your cardinality, be only one bank and only banking elements
+     * Read the input file to internal memory Split the content into several parts and validate your cardinality, be only one bank
+     * and only banking elements
      *
      * @throws IOException
      * @throws OFXParseException
@@ -122,13 +122,14 @@ public class OFXFileHelper {
             fis.close();
         }
     }
-    
+
     /**
      * SignonResponse after read the file
      */
-    protected SignonResponse getSignonResponse() throws IOException, OFXParseException{
+    protected SignonResponse getSignonResponse() throws IOException, OFXParseException {
         return this.getOFXContent().getSignonResponse();
-    };
+    }
+    ;
 
     private ResponseEnvelope OFXContent;
 
@@ -158,6 +159,7 @@ public class OFXFileHelper {
 
     /**
      * Writes the actual content from OFXContent to the specified filename's Based at link
+     *
      * @see <a href=http://javadevtips.blogspot.com.br/2011/11/creating-mock-ofx-server.html </a>
      *
      * @param filename
@@ -170,8 +172,11 @@ public class OFXFileHelper {
             Writer out = new OutputStreamWriter(fos, "windows-1252"); //Requerido para interpretrar corretamente os dados
             OFXV1Writer ofxWriter = new OFXV1Writer(out);
             // todo para AggregateMarshaller.writeAggregateAttributes() necessario fork para forçar identação e fechamento de tag
-            
+
             ofxWriter.setWriteAttributesOnNewLine(true);
+            ofxWriter.setAllwaysCloseElement(true);
+            ofxWriter.setTabLength(4);
+            ofxWriter.setWriteValuesOnNewLine(false);
             try {
                 AggregateMarshaller a = new AggregateMarshaller();  //Adapter para serialização
                 a.marshal(this.OFXContent, ofxWriter);
