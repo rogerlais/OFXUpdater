@@ -179,6 +179,7 @@ public class OFXFileHelper {
             ofxWriter.setWriteValuesOnNewLine(false);
             try {
                 AggregateMarshaller a = new AggregateMarshaller();  //Adapter para serialização
+                a.setConversion(new BBOFXStringConversation());  //Adjuste to Bank of Bostil output
                 a.marshal(this.OFXContent, ofxWriter);
             } finally {
                 ofxWriter.close();
