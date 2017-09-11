@@ -1,3 +1,7 @@
+[TimeZone]
+rawOffset expressa em milisegundos
+
+
 [dependencia original]
         <dependency>
             <groupId>com.webcohesion.ofx4j</groupId>
