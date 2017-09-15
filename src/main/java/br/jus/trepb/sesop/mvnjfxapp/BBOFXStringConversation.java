@@ -35,6 +35,7 @@ public class BBOFXStringConversation extends DefaultStringConversion {
         // !!!OLD FORM - SEE ABOVE return String.format("%1$tH%1$tM%1$tS.%1$tL", calendar);
     }
 
+    
     @Override
     protected String formatDate(Date date) {
         // todo formatar de acordo com a regras do BB
