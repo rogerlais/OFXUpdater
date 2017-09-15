@@ -175,7 +175,7 @@ public class OFXFileHelper {
 
             ofxWriter.setWriteAttributesOnNewLine(true);
             ofxWriter.setAllwaysCloseElement(true);
-            ofxWriter.setTabLength(4);
+            ofxWriter.setTabLength(3);
             ofxWriter.setWriteValuesOnNewLine(false);
             try {
                 AggregateMarshaller a = new AggregateMarshaller();  //Adapter para serialização

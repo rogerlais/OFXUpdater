@@ -31,6 +31,7 @@
             <goals>
                 <goal>install</goal>
                 <goal>-Dmaven.compiler.fork=true</goal>
+                
             </goals>
         </action>                
     </actions>

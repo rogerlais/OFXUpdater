@@ -47,19 +47,19 @@ public class BBOFXStringConversation extends DefaultStringConversion {
         ZonedDateTime zonedNZ = ZonedDateTime.of(localNZ, ZoneId.of("+13:00"));
         LocalDateTime localUTC = zonedNZ.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
         System.out.println("UTC Local Time: " + localUTC.format(formatter));
-         */
+        
         SimpleDateFormat sdf = new SimpleDateFormat("zzz");
         System.out.println(TimeZone.getDefault().getID());
         System.out.println(sdf.format(date));
 
         ZoneId z = ZoneId.of("America/Recife");
-        ZoneOffset offsetInEffectNow = z.getRules().getOffset(Instant.now());
+        ZoneOffset offsetInEffectNow = z.getRules().getOffset(date.toInstant());
         System.out.println(offsetInEffectNow);
-
-        //ZoneId z = ZoneId.of("BRT");
-        //Instant iDate = date.toInstant();
-        //iDate.        ZonedDateTime zdt = iDate.atZone(z);
-        //System.out.println(zdt);
+        ZoneId z = ZoneId.of("BRT");
+        Instant iDate = date.toInstant();
+        iDate.        ZonedDateTime zdt = iDate.atZone(z);
+        System.out.println(zdt);
+         */
         GregorianCalendar calendar = new GregorianCalendar(this.LocalTimeZone);
         calendar.setTime(date);
         calendar.setTimeZone(TimeZone.getDefault());
