@@ -9,7 +9,10 @@ import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
+import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
 import com.webcohesion.ofx4j.io.AggregateMarshaller;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
@@ -22,16 +25,39 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  *
  * @author roger
  */
 public class OFXFileHelper {
+
+    /**
+     * @return the inputFile
+     */
+    public File getInputFile() {
+        return inputFile;
+    }
+
+    /**
+     * Recupera o nome padrão do arquivo de saída(no mesmo local do arquivo de entrada)
+     *
+     * @return Nome padrão do arquivo de saída
+     */
+    public String getStdOutputFilename() {
+        //Prepara nome do ofx de saida para o master
+        return FilenameUtils.removeExtension(this.getInputFile().getAbsolutePath()) + "_upd.ofx";
+    }
 
     public boolean getIsReaded() {
         return (this.OFXContent != null);
@@ -81,7 +107,7 @@ public class OFXFileHelper {
      */
     public void read() throws IOException, OFXParseException {
 
-        FileInputStream fis = new FileInputStream(this.inputFile);
+        FileInputStream fis = new FileInputStream(this.getInputFile());
         try {
             Reader fr = new InputStreamReader(fis, "windows-1252"); //Requerido para interpertrar corretamente os dados
             try {
@@ -185,6 +211,64 @@ public class OFXFileHelper {
                 ofxWriter.close();
             }
         }
-
     }
+
+    /**
+     * Export only transaction as CSV
+     *
+     * @param filename
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws OFXParseException
+     */
+    public void exportAsCSV(String filename) throws FileNotFoundException, IOException, OFXParseException {
+        try (PrintWriter out = new PrintWriter(filename)) {
+            out.print(this.toCSVString());
+            out.flush();
+            out.close();
+        }
+    }
+
+    static private String toCsvRow(BankAccountDetails bankDetail, Date ts, Transaction transaction) {
+        String result = "";
+        result += bankDetail.getAccountNumber() + ",";
+        SimpleDateFormat sdf = new SimpleDateFormat("YYYYMMDDHHmmss[ZZ:zzz]");
+        sdf.setTimeZone(TimeZone.getDefault());
+        result += sdf.format(ts) + ",";
+        result += transaction.getTransactionType().name() + ",";
+        result += transaction.getDatePosted() + ",";
+        result += transaction.getAmount() + ",";
+        result += transaction.getId() + ",";  //BUSCAR DIFERENÇA DTPOSTED
+        result += transaction.getCheckNumber() + ",";
+        result += "=\"" + transaction.getReferenceNumber() + "\","; // = para ser interpretado forçadamente como texto
+        result += transaction.getMemo() + "\r\n";
+        return result;
+    }
+
+    public String toCSVString() throws IOException, OFXParseException {
+        ResponseEnvelope re = this.getOFXContent();
+        //objeto contendo informações como instituição financeira, idioma, data da conta.
+        SignonResponse sr = re.getSignonResponse();
+        //como não existe esse get "BankStatementResponse bsr = re.getBankStatementResponse();"
+        //fiz esse codigo para capturar a lista de transações
+        MessageSetType type = MessageSetType.banking;
+        ResponseMessageSet message = re.getMessageSet(type);  //pega apenas o conjunto para a classe filtrada acima
+        if (message != null) {
+            List bank = ((BankingResponseMessageSet) message).getStatementResponses();
+            StringBuilder result = new StringBuilder();
+            result.append("ACCOUNT,OFX-DATE,TRNTYPE,DTPOSTED,TRNAMT,FITID,CHECKNUM,REFNUM,MEMO\n\r");
+            for (Iterator it = bank.iterator(); it.hasNext();) {
+                BankStatementResponseTransaction b = (BankStatementResponseTransaction) it.next();
+                List list = b.getMessage().getTransactionList().getTransactions();
+                for (Iterator itT = list.iterator(); itT.hasNext();) {
+                    Transaction transaction = (Transaction) itT.next();
+                    result.append(toCsvRow(b.getMessage().getAccount(), sr.getTimestamp(), transaction));
+                }
+            }
+            return result.toString();
+        } else {
+            return "";
+        }
+    }
+
 }

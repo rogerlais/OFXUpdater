@@ -26,7 +26,7 @@ public class BBOFXStringConversation extends DefaultStringConversion {
 
     @Override
     protected String formatTime(Time time) {
-        // todo formtar de acordo com a regra do BB
+        //Format following BB rules
         GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("BRT"));
         calendar.setTime(time);
         calendar.setTimeZone(TimeZone.getDefault());
@@ -38,8 +38,7 @@ public class BBOFXStringConversation extends DefaultStringConversion {
     
     @Override
     protected String formatDate(Date date) {
-        // todo formatar de acordo com a regras do BB
-
+        //Format following BB rules
         /*
         System.out.println(" NZ Local Time: 2011-10-06 03:35:05");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -60,10 +59,11 @@ public class BBOFXStringConversation extends DefaultStringConversion {
         iDate.        ZonedDateTime zdt = iDate.atZone(z);
         System.out.println(zdt);
          */
+        // TODO Parameters to instance will be desired. A config to TimeZone or ZoneId by example
         GregorianCalendar calendar = new GregorianCalendar(this.LocalTimeZone);
         calendar.setTime(date);
         calendar.setTimeZone(TimeZone.getDefault());
-        String result = String.format("%1$tY%1$tm%1$td%1$tH%1$tM%1$tS", calendar) + "[-3:BRT]";
+        String result = String.format("%1$tY%1$tm%1$td%1$tH%1$tM%1$tS", calendar) + "[-3:BRT]"; //See T-O-D-O above
         return result;
     }
 

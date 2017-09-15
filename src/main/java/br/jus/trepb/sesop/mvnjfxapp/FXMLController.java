@@ -84,33 +84,18 @@ public class FXMLController implements Initializable {
 
     @FXML
     private void handleButtonExecute(ActionEvent event) throws IOException, OFXParseException {
+
+        //PRE: 2 filenames and valids ofx files
         System.out.println("Iniciando operação!");
         //Cria arquivo para o apontado como master
-        File masterOFX = new File(this.edtMasterOFX.getText());
-        //Prepara nome do ofx de saida para o master
-        String outMasterOFXName = FilenameUtils.removeExtension(masterOFX.getAbsolutePath()) + "_upd.ofx";
-        
-        //Instancia o OFX
-        OFXFileHelper ofxF = new OFXFileHelper(masterOFX);
-
-        //Exibe transações no console
-        // TODO remover posteriormente isso    
-        OFXFileIO.displayContent(ofxF);
-        
-        this.saveAsCSV("D:\\temp\\out.csv", OFXFileIO.toCSVString(ofxF));
-
-        //Salva como outro ofx no mesmo camainho com sufixo alterado
-        BankAccountDetails account = ofxF.getBankSetRerponseTransaction(0).getMessage().getAccount();
+        File masterOFXFile = new File(this.edtMasterOFX.getText());
+        //Instancia o OFX master
+        OFXFileHelper masterOFX = new OFXFileHelper(masterOFXFile);
+        //Salva como outro ofx no mesmo caminho com sufixo alterado
+        BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
         account.setAccountNumber("123456");
-        ofxF.writeTo(outMasterOFXName);
-    }
-
-    private void saveAsCSV(String filename, String content) throws FileNotFoundException {
-        try (PrintWriter out = new PrintWriter(filename)) {
-            out.print(content);
-            out.flush();
-            out.close();
-        }
+        masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
+        masterOFX.writeTo(masterOFX.getStdOutputFilename());
     }
 
 }
