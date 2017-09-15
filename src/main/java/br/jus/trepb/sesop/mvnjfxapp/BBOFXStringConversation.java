@@ -7,6 +7,11 @@ package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -33,6 +38,27 @@ public class BBOFXStringConversation extends DefaultStringConversion {
     @Override
     protected String formatDate(Date date) {
         // todo formatar de acordo com a regras do BB
+
+        /*
+        System.out.println(" NZ Local Time: 2011-10-06 03:35:05");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime localNZ = LocalDateTime.parse("2011-10-06 03:35:05", formatter);
+        ZonedDateTime zonedNZ = ZonedDateTime.of(localNZ, ZoneId.of("+13:00"));
+        LocalDateTime localUTC = zonedNZ.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
+        System.out.println("UTC Local Time: " + localUTC.format(formatter));
+         */
+        SimpleDateFormat sdf = new SimpleDateFormat("zzz");
+        System.out.println(TimeZone.getDefault().getID());
+        System.out.println(sdf.format(date));
+
+        ZoneId z = ZoneId.of("America/Recife");
+        ZoneOffset offsetInEffectNow = z.getRules().getOffset(Instant.now());
+        System.out.println(offsetInEffectNow);
+
+        //ZoneId z = ZoneId.of("BRT");
+        //Instant iDate = date.toInstant();
+        //iDate.        ZonedDateTime zdt = iDate.atZone(z);
+        //System.out.println(zdt);
         GregorianCalendar calendar = new GregorianCalendar(this.LocalTimeZone);
         calendar.setTime(date);
         calendar.setTimeZone(TimeZone.getDefault());
