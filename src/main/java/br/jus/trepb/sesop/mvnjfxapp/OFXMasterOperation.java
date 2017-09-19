@@ -23,6 +23,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
@@ -132,18 +134,27 @@ public class OFXMasterOperation {
      */
     private void checkWindowTime() throws IOException, OFXParseException, Exception {
 
-        Instant masterStartDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant().plus(1, ChronoUnit.DAYS);
-        Instant masterEndDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant().plus(-1, ChronoUnit.DAYS);
+        ZoneId zid = ZoneId.systemDefault();
 
-        Instant slaveStartDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant().plus(1, ChronoUnit.DAYS);
-        Instant slaveEndDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant().plus(-11, ChronoUnit.DAYS);
+        LocalDateTime masterStartDate = LocalDateTime.ofInstant(
+                this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant(), zid);
+        LocalDateTime masterEndDate = LocalDateTime.ofInstant(
+                this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
 
-        int masterStartMonth = masterStartDate.get(ChronoField.MONTH_OF_YEAR);
-        int masterEndMonth = masterEndDate.get(ChronoField.MONTH_OF_YEAR);
-        int slaveStartMonth = slaveStartDate.get(ChronoField.MONTH_OF_YEAR);
-        int slaveEndMonth = slaveEndDate.get(ChronoField.MONTH_OF_YEAR);
+        LocalDateTime slaveStartDate = LocalDateTime.ofInstant(
+                this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant(), zid);
+        LocalDateTime slaveEndDate = LocalDateTime.ofInstant(
+                this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
 
-        // TODO validar a janela de tempo dos arquivos
+        int masterStartMonth = masterStartDate.plusDays(1).getMonthValue();
+        int masterEndMonth = masterEndDate.minusDays(1).getMonthValue();
+        int slaveStartMonth = slaveStartDate.plusDays(1).getMonthValue();
+        int slaveEndMonth = slaveEndDate.minusDays(1).getMonthValue();
+
+        -- --encontrada faixa for
+            do
+                mes ?  ?  ?  ?
+                        ?        // TODO validar a janela de tempo dos arquivos
         if ((masterEndMonth | masterStartMonth | slaveEndMonth | slaveStartMonth) != masterStartMonth) {
             throw new Exception("janela de tempo incompatível para os arquivos informados");
         }
