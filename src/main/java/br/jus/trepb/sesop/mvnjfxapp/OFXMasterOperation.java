@@ -22,6 +22,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -123,32 +128,35 @@ public class OFXMasterOperation {
     }
 
     /**
-     * Validate the window time from both files
+     * Validate the window time from both files Both files must have a list of transactions at a only one month
      */
-    public void checkWindowTime() throws IOException, OFXParseException {
-        Date masterStartDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart();
-        Date masterEndDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd();
+    private void checkWindowTime() throws IOException, OFXParseException, Exception {
 
-        Date slaveStartDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart();
-        Date slaveEndDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd();
+        Instant masterStartDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant().plus(1, ChronoUnit.DAYS);
+        Instant masterEndDate = this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant().plus(-1, ChronoUnit.DAYS);
 
-        GregorianCalendar c = GregorianCalendar.from(zdt);
-        c.setTime(slaveEndDate);
+        Instant slaveStartDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant().plus(1, ChronoUnit.DAYS);
+        Instant slaveEndDate = this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant().plus(-11, ChronoUnit.DAYS);
+
+        int masterStartMonth = masterStartDate.get(ChronoField.MONTH_OF_YEAR);
+        int masterEndMonth = masterEndDate.get(ChronoField.MONTH_OF_YEAR);
+        int slaveStartMonth = slaveStartDate.get(ChronoField.MONTH_OF_YEAR);
+        int slaveEndMonth = slaveEndDate.get(ChronoField.MONTH_OF_YEAR);
 
         // TODO validar a janela de tempo dos arquivos
-        if (masterStartDate.get) {
-
+        if ((masterEndMonth | masterStartMonth | slaveEndMonth | slaveStartMonth) != masterStartMonth) {
+            throw new Exception("janela de tempo incompatível para os arquivos informados");
         }
 
     }
 
-    public OFXMasterOperation(OFXFileHelper master, OFXFileHelper slave) {
+    public OFXMasterOperation(OFXFileHelper master, OFXFileHelper slave) throws Exception {
         this.master = master;
         this.slave = slave;
         this.checkIntegrity();
     }
 
-    private void checkIntegrity() {
+    protected void checkIntegrity() throws OFXParseException, Exception {
         this.checkWindowTime();
     }
 }

@@ -16,6 +16,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import java.nio.file.Paths;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import org.apache.commons.io.FilenameUtils;
 
 public class FXMLController implements Initializable {
@@ -87,15 +89,40 @@ public class FXMLController implements Initializable {
 
         //PRE: 2 filenames and valids ofx files
         System.out.println("Iniciando operação!");
-        //Cria arquivo para o apontado como master
-        File masterOFXFile = new File(this.edtMasterOFX.getText());
-        //Instancia o OFX master
-        OFXFileHelper masterOFX = new OFXFileHelper(masterOFXFile);
-        //Salva como outro ofx no mesmo caminho com sufixo alterado
-        BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
-        account.setAccountNumber("123456");
-        masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
-        masterOFX.writeTo(masterOFX.getStdOutputFilename());
+
+        try {
+            //Cria arquivo para o apontado como master
+            File masterOFXFile = new File(this.edtMasterOFX.getText());
+            //Instancia o OFX master
+            OFXFileHelper masterOFX = new OFXFileHelper(masterOFXFile);
+            masterOFX.read();
+
+            //Cria arquivo slave
+            File slaveOFXFile = new File(this.edtSlaveOFX.getText());
+            //Instancia o OFX master
+            OFXFileHelper slaveOFX = new OFXFileHelper(slaveOFXFile);
+            slaveOFX.read();
+
+            OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
+
+            //Salva como outro ofx no mesmo caminho com sufixo alterado
+            BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
+            account.setAccountNumber("123456");
+            masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
+            masterOFX.writeTo(masterOFX.getStdOutputFilename());
+
+        } catch (Exception exception) {
+            showAlert("Alerta de erro", exception.getMessage());
+        }
+
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText("Information Alert");
+        alert.setContentText(message);
+        alert.show();
     }
 
 }
