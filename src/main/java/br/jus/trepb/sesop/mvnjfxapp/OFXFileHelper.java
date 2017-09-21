@@ -5,6 +5,7 @@
  */
 package br.jus.trepb.sesop.mvnjfxapp;
 
+import com.webcohesion.ofx4j.OFXTransactionException;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
@@ -30,6 +31,9 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -50,13 +54,36 @@ public class OFXFileHelper {
     }
 
     /**
-     * Recupera o nome padrão do arquivo de saída(no mesmo local do arquivo de entrada)
+     * Return default output full filename (same folder from input file)
      *
-     * @return Nome padrão do arquivo de saída
+     * @return default output full filename
      */
     public String getStdOutputFilename() {
         //Prepara nome do ofx de saida para o master
         return FilenameUtils.removeExtension(this.getInputFile().getAbsolutePath()) + "_upd.ofx";
+    }
+
+    /**
+     * Calculate the first transaction at list
+     *
+     * @return first timely transaction
+     * @throws OFXException
+     */
+    public Date getFirstTransactionTime() throws OFXException {
+        try {
+            Date result = Date.from(Instant.MAX);
+            --exception here List
+            <Transaction > transList = this.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getTransactions();
+            for (Iterator itT = transList.iterator(); itT.hasNext();) {
+                Transaction transaction = (Transaction) itT.next();
+                if (transaction.getDatePosted().before(result)) {
+                    result = transaction.getDatePosted();
+                }
+            }
+            return result;
+        } catch (IOException | OFXParseException iOException) {
+            throw new OFXException(iOException.getMessage());
+        }
     }
 
     public boolean getIsReaded() {

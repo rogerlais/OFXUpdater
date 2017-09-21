@@ -136,13 +136,11 @@ public class OFXMasterOperation {
 
         ZoneId zid = ZoneId.systemDefault();
 
-        LocalDateTime masterStartDate = LocalDateTime.ofInstant(
-                this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant(), zid);
+        LocalDateTime masterStartDate = LocalDateTime.ofInstant(master.getFirstTransactionTime().toInstant(), zid);
         LocalDateTime masterEndDate = LocalDateTime.ofInstant(
                 this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
 
-        LocalDateTime slaveStartDate = LocalDateTime.ofInstant(
-                this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getStart().toInstant(), zid);
+        LocalDateTime slaveStartDate = LocalDateTime.ofInstant(master.getFirstTransactionTime().toInstant(), zid);
         LocalDateTime slaveEndDate = LocalDateTime.ofInstant(
                 this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
 
@@ -151,10 +149,7 @@ public class OFXMasterOperation {
         int slaveStartMonth = slaveStartDate.plusDays(1).getMonthValue();
         int slaveEndMonth = slaveEndDate.minusDays(1).getMonthValue();
 
-        -- --encontrada faixa for
-            do
-                mes ?  ?  ?  ?
-                        ?        // TODO validar a janela de tempo dos arquivos
+        // TODO validar a janela de tempo dos arquivos
         if ((masterEndMonth | masterStartMonth | slaveEndMonth | slaveStartMonth) != masterStartMonth) {
             throw new Exception("janela de tempo incompatível para os arquivos informados");
         }
