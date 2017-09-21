@@ -70,22 +70,50 @@ public class OFXFileHelper {
      * @throws OFXException
      */
     public Date getFirstTransactionTime() throws OFXException {
-        try {
-            Date result = Date.from(Instant.MAX);
-            --exception here List
-            <Transaction > transList = this.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getTransactions();
+        Date result = new Date(Long.MAX_VALUE);
+        List<Transaction> transList = getTransactionList();
+        for (Iterator itT = transList.iterator(); itT.hasNext();) {
+            Transaction transaction = (Transaction) itT.next();
+            if (transaction.getDatePosted().before(result)) {
+                result = transaction.getDatePosted();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Calculate the last transaction at list
+     *
+     * @return last timely transaction
+     * @throws OFXException
+     */
+    public Date getLastTransactionTime() throws OFXException {
+        Date result = new Date(Long.MIN_VALUE);
+            List<Transaction> transList = this.getTransactionList();
             for (Iterator itT = transList.iterator(); itT.hasNext();) {
                 Transaction transaction = (Transaction) itT.next();
-                if (transaction.getDatePosted().before(result)) {
+                if (transaction.getDatePosted().after(result)) {
                     result = transaction.getDatePosted();
                 }
             }
             return result;
-        } catch (IOException | OFXParseException iOException) {
-            throw new OFXException(iOException.getMessage());
-        }
     }
 
+    /**
+     * The list of transaction from this file
+     *
+     * @return
+     * @throws br.jus.trepb.sesop.mvnjfxapp.OFXException
+     */
+    protected List<Transaction> getTransactionList() throws OFXException {
+        return this.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getTransactions();
+    }
+
+    /**
+     * Flag to indicate this condition
+     *
+     * @return
+     */
     public boolean getIsReaded() {
         return (this.OFXContent != null);
     }
@@ -106,11 +134,14 @@ public class OFXFileHelper {
      *
      * @param i index from bank
      * @return Container with transaction data BankStatementResponseTransaction
-     * @throws IOException
-     * @throws OFXParseException
+     * @throws br.jus.trepb.sesop.mvnjfxapp.OFXException
      */
-    public BankStatementResponseTransaction getBankSetRerponseTransaction(int i) throws IOException, OFXParseException {
-        return (BankStatementResponseTransaction) this.getBankResponses().get(i);
+    public BankStatementResponseTransaction getBankSetRerponseTransaction(int i) throws OFXException {
+        try {
+            return (BankStatementResponseTransaction) this.getBankResponses().get(i);
+        } catch (OFXParseException | IOException ex) {
+            throw new OFXException("Erro recuperando resposta interna do arquivo(resposto do banco)" + ex.getMessage());
+        }
     }
 
     /**
@@ -254,6 +285,26 @@ public class OFXFileHelper {
             out.flush();
             out.close();
         }
+    }
+
+    /**
+     * Find the correspondent transaction based on ID
+     *
+     * @param target
+     * @return
+     * @throws OFXException
+     */
+    protected Transaction getMatchTransaction(Transaction target) throws OFXException {
+        Transaction result = null;
+        List<Transaction> tl = this.getTransactionList();
+        for (Iterator itT = tl.iterator(); itT.hasNext();) {
+            Transaction transaction = (Transaction) itT.next();
+            if (transaction.getId().equals(target.getId())) {
+                result = transaction;
+                break;
+            }
+        }
+        return result;
     }
 
     static private String toCsvRow(BankAccountDetails bankDetail, Date ts, Transaction transaction) {

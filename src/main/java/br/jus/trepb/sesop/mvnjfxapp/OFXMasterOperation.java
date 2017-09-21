@@ -137,20 +137,17 @@ public class OFXMasterOperation {
         ZoneId zid = ZoneId.systemDefault();
 
         LocalDateTime masterStartDate = LocalDateTime.ofInstant(master.getFirstTransactionTime().toInstant(), zid);
-        LocalDateTime masterEndDate = LocalDateTime.ofInstant(
-                this.master.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
-
+        LocalDateTime masterEndDate = LocalDateTime.ofInstant(master.getLastTransactionTime().toInstant(), zid);
         LocalDateTime slaveStartDate = LocalDateTime.ofInstant(master.getFirstTransactionTime().toInstant(), zid);
-        LocalDateTime slaveEndDate = LocalDateTime.ofInstant(
-                this.slave.getBankSetRerponseTransaction(0).getMessage().getTransactionList().getEnd().toInstant(), zid);
+        LocalDateTime slaveEndDate = LocalDateTime.ofInstant(master.getLastTransactionTime().toInstant(), zid);
 
         int masterStartMonth = masterStartDate.plusDays(1).getMonthValue();
         int masterEndMonth = masterEndDate.minusDays(1).getMonthValue();
         int slaveStartMonth = slaveStartDate.plusDays(1).getMonthValue();
         int slaveEndMonth = slaveEndDate.minusDays(1).getMonthValue();
 
-        // TODO validar a janela de tempo dos arquivos
-        if ((masterEndMonth | masterStartMonth | slaveEndMonth | slaveStartMonth) != masterStartMonth) {
+        // TODO validar a janela de tempo dos arquivos(único mês de operação)
+        if ((masterEndMonth != masterStartMonth) || (slaveEndMonth != slaveStartMonth) || (masterStartMonth != slaveEndMonth)) {
             throw new Exception("janela de tempo incompatível para os arquivos informados");
         }
 
@@ -163,6 +160,58 @@ public class OFXMasterOperation {
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
-        this.checkWindowTime();
+        // TODO Colocar todos os casos de checagem de integridade para o par de OFX informados
+        this.checkWindowTime(); //Todas as transações dentro do mesmo mês
+        this.checkOwners();
+    }
+
+    /**
+     * Debug only method to track the process
+     *
+     * @param filename
+     * @throws IOException
+     * @throws OFXParseException
+     */
+    protected void exportCSVTransactionPairs(String filename) throws OFXException {
+        StringBuilder result = new StringBuilder();
+        result.append("ACCOUNT-MASTER,ACCOUNT-SLAVE,OFX-DATE-MASTER,OFX-DATE-SLAVE,TRNTYPE-MASTER,TRNTYPE-SLAVE,"
+                + "DTPOSTED-MASTER,DTPOSTED-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
+                + "CHECKNUM-SLAVE,REFNUM-MASTER,REFNUM-SLAVE,MEMO-MASTER,MEMO-SLAVE\n\r");
+        List<Transaction> masterList = this.master.getTransactionList();
+        for (Iterator itT = masterList.iterator(); itT.hasNext();) {
+            Transaction mTrans = (Transaction) itT.next();
+            if (mTrans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {
+                Transaction sTrans = this.slave.getMatchTransaction(mTrans);
+                --"não encontrado no enxemplo"
+                if (sTrans != null) {
+                    result.append(mTrans.getBankAccountTo() + ","); //ACCOUNT-MASTER
+                   /*
+                        + "ACCOUNT-SLAVE"
+                            + "OFX-DATE-MASTER"
+                            + "OFX-DATE-SLAVE"
+                            + "TRNTYPE-MASTER"
+                            + "TRNTYPE-SLAVE"
+                            + "DTPOSTED-MASTER"
+                            + "DTPOSTED-SLAVE"
+                            + "TRNAMT-MASTER"
+                            + "TRNAMT-SLAVE"
+                            + "FITID-MASTER"
+                            + "FITID-SLAVE"
+                            + "CHECKNUM-MASTER"
+                            + "CHECKNUM-SLAVE"
+                            + "REFNUM-MASTER"
+                            + "REFNUM-SLAVE"
+                            + "MEMO-MASTER"
+                            + "MEMO-SLAVE\n\r"
+                     */
+                } else {
+                    throw new OFXException("Transação não pareada encontrada: " + mTrans.getId());
+                }
+            }
+        }
+    }
+
+    private void checkOwners() {
+        //TODO roger para master e MV para slave, numero de agencia e conta correspondentes
     }
 }

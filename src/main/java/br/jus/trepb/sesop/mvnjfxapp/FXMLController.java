@@ -104,6 +104,7 @@ public class FXMLController implements Initializable {
             slaveOFX.read();
 
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
+            controller.exportCSVTransactionPairs("D:\\Temp\\Out.csv");
 
             //Salva como outro ofx no mesmo caminho com sufixo alterado
             BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
