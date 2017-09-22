@@ -63,7 +63,7 @@ public class FXMLController implements Initializable {
         this.btnExec.setMnemonicParsing(true);
         this.btnCancel.setMnemonicParsing(true);
         if (GlobalConfig.DEBUG) {
-            this.lastUsedDir = Paths.get(System.getProperty("user.home"), "\\Google Drive\\10.Privado\\Financeiro\\2016\\12").toString();
+            this.lastUsedDir = Paths.get(System.getProperty("user.home"), "\\Google Drive\\10.Privado\\Financeiro\\2017\\01").toString();
         } else {
             this.lastUsedDir = "c:\\";
         }

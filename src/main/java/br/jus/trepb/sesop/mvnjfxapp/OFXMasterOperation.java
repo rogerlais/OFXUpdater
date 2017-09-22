@@ -182,7 +182,6 @@ public class OFXMasterOperation {
             Transaction mTrans = (Transaction) itT.next();
             if (mTrans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {
                 Transaction sTrans = this.slave.getMatchTransaction(mTrans);
-                --"não encontrado no enxemplo"
                 if (sTrans != null) {
                     result.append(mTrans.getBankAccountTo() + ","); //ACCOUNT-MASTER
                    /*

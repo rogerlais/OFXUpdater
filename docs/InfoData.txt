@@ -1,3 +1,27 @@
+*********************************************************************
+Exemplos de dados a conciliar
+
+[201612]
+[1]
+<TRNTYPE>OTHER</TRNTYPE>														<TRNTYPE>OTHER</TRNTYPE>
+<DTPOSTED>20161209120000[-3:BRT]</DTPOSTED>										<DTPOSTED>20161209120000[-3:BRT]</DTPOSTED>
+<TRNAMT>200.00</TRNAMT>															<TRNAMT>-200.00</TRNAMT>
+<FITID>201612090200000</FITID>													<FITID>201612091200000</FITID>
+<CHECKNUM>612000055898</CHECKNUM>												<CHECKNUM>501000021038</CHECKNUM>
+<REFNUM>603.612.000.055.898</REFNUM>											<REFNUM>603.501.000.021.038</REFNUM>
+<MEMO>Transferência on line - 09/12 3612      55898-2 ROGERLAIS ANDR</MEMO>		<MEMO>Transferência on line - 09/12 3501      21038-2 MERCIA VIEIRA</MEMO>
+
+[2]
+<TRNTYPE>OTHER</TRNTYPE>														<TRNTYPE>OTHER</TRNTYPE>
+<DTPOSTED>20161212120000[-3:BRT]</DTPOSTED>                                     <DTPOSTED>20161212120000[-3:BRT]</DTPOSTED>
+<TRNAMT>-200.00</TRNAMT>                                                        <TRNAMT>200.00</TRNAMT>
+<FITID>201612121200000</FITID>                                                  <FITID>201612120200000</FITID>
+<CHECKNUM>501000021038</CHECKNUM>                                               <CHECKNUM>612000055898</CHECKNUM>
+<REFNUM>603.501.000.021.038</REFNUM>                                            <REFNUM>603.612.000.055.898</REFNUM>
+<MEMO>Transferência on line - 10/12 3501      21038-2 MERCIA VIEIRA</MEMO>      <MEMO>Transferência on line - 10/12 3612      55898-2 ROGERLAIS ANDR</MEMO>
+
+
+
 
 [TimeZone]
 rawOffset expressa em milisegundos
