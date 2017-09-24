@@ -8,7 +8,6 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
-import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
@@ -18,19 +17,13 @@ import com.webcohesion.ofx4j.io.OFXParseException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
+import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalField;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -82,11 +75,11 @@ public class OFXMasterOperation {
 
     /**
      * Show OFX content
+     *
      * @param ofxFile
      * @throws FileNotFoundException
      * @throws IOException
-     * @throws OFXParseException
-     * Source:  
+     * @throws OFXParseException Source:
      * @see <a href = https://comunidadecc.blogspot.com.br/2010/08/lendo-arquivo-ofx-com-ofx4j.html>
      */
     public void displayContentFromFile(File ofxFile) throws FileNotFoundException, IOException, OFXParseException {
@@ -172,42 +165,44 @@ public class OFXMasterOperation {
      * @throws IOException
      * @throws OFXParseException
      */
-    protected void exportCSVTransactionPairs(String filename) throws OFXException {
+    protected void exportCSVTransactionPairs(String filename) throws OFXException, IOException {
         StringBuilder result = new StringBuilder();
-        result.append("ACCOUNT-MASTER,ACCOUNT-SLAVE,OFX-DATE-MASTER,OFX-DATE-SLAVE,TRNTYPE-MASTER,TRNTYPE-SLAVE,"
-                + "DTPOSTED-MASTER,DTPOSTED-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
+        result.append("ACCOUNT-MASTER,ACCOUNT-SLAVE,DTPOSTED-MASTER,DTPOSTED-SLAVE,TRNTYPE-MASTER,TRNTYPE-SLAVE,"
+                + "DTAVAILABLE-MASTER,DTAVAILABLE-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
                 + "CHECKNUM-SLAVE,REFNUM-MASTER,REFNUM-SLAVE,MEMO-MASTER,MEMO-SLAVE\n\r");
         List<Transaction> masterList = this.master.getTransactionList();
         for (Iterator itT = masterList.iterator(); itT.hasNext();) {
             Transaction mTrans = (Transaction) itT.next();
             if (mTrans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {
-                Transaction sTrans = this.slave.getMatchTransaction(mTrans);
+                Transaction sTrans = this.slave.getMatchTransaction(mTrans, GlobalConfig.OLD_MASTER_ACCOUNT);
                 if (sTrans != null) {
-                    result.append(mTrans.getBankAccountTo() + ","); //ACCOUNT-MASTER
-                   /*
-                        + "ACCOUNT-SLAVE"
-                            + "OFX-DATE-MASTER"
-                            + "OFX-DATE-SLAVE"
-                            + "TRNTYPE-MASTER"
-                            + "TRNTYPE-SLAVE"
-                            + "DTPOSTED-MASTER"
-                            + "DTPOSTED-SLAVE"
-                            + "TRNAMT-MASTER"
-                            + "TRNAMT-SLAVE"
-                            + "FITID-MASTER"
-                            + "FITID-SLAVE"
-                            + "CHECKNUM-MASTER"
-                            + "CHECKNUM-SLAVE"
-                            + "REFNUM-MASTER"
-                            + "REFNUM-SLAVE"
-                            + "MEMO-MASTER"
-                            + "MEMO-SLAVE\n\r"
-                     */
+                    result.append(mTrans.getBankAccountTo()).append(","); //ACCOUNT-MASTER
+                    result.append(sTrans.getBankAccountTo()).append(","); //"ACCOUNT-SLAVE"
+                    result.append(mTrans.getDatePosted()).append(","); //"DTPOSTED-MASTER"
+                    result.append(sTrans.getDatePosted()).append(",");//"DTPOSTED-SLAVE"
+                    result.append(mTrans.getTransactionType()).append(","); //"TRNTYPE-MASTER"
+                    result.append(sTrans.getTransactionType()).append(","); //"TRNTYPE-SLAVE"
+                    result.append(mTrans.getDateAvailable()).append(",");   //"DTAVAILABLE-MASTER"
+                    result.append(sTrans.getDateAvailable()).append(",");   //"DTAVAILABLE-SLAVE"
+                    result.append(mTrans.getAmount()).append(",");  //"TRNAMT-MASTER"
+                    result.append(sTrans.getAmount()).append(",");  //"TRNAMT-SLAVE"
+                    result.append(mTrans.getId()).append(",");  //"FITID-MASTER"
+                    result.append(sTrans.getId()).append(",");  //"FITID-SLAVE"
+                    result.append(mTrans.getCheckNumber()).append(",");   //"CHECKNUM-MASTER"
+                    result.append(sTrans.getCheckNumber()).append(",");   //"CHECKNUM-SLAVE"
+                    result.append("=\"").append(mTrans.getReferenceNumber()).append("\","); //"REFNUM-MASTER"
+                    result.append("=\"").append(sTrans.getReferenceNumber()).append("\","); //"REFNUM-SLAVE"
+                    result.append(mTrans.getMemo()).append(",");        //"MEMO-MASTER"
+                    result.append(sTrans.getMemo()).append("\n\r");    //"MEMO-SLAVE\n\r"
+                    //result += "=\"" + transaction.getReferenceNumber() + "\","; // = para ser interpretado forçadamente como texto
                 } else {
                     throw new OFXException("Transação não pareada encontrada: " + mTrans.getId());
                 }
             }
         }
+        Writer fw = new FileWriter(filename);
+        fw.write(result.toString());
+        fw.close();
     }
 
     private void checkOwners() {

@@ -5,7 +5,6 @@
  */
 package br.jus.trepb.sesop.mvnjfxapp;
 
-import com.webcohesion.ofx4j.OFXTransactionException;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
@@ -31,9 +30,6 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -89,14 +85,14 @@ public class OFXFileHelper {
      */
     public Date getLastTransactionTime() throws OFXException {
         Date result = new Date(Long.MIN_VALUE);
-            List<Transaction> transList = this.getTransactionList();
-            for (Iterator itT = transList.iterator(); itT.hasNext();) {
-                Transaction transaction = (Transaction) itT.next();
-                if (transaction.getDatePosted().after(result)) {
-                    result = transaction.getDatePosted();
-                }
+        List<Transaction> transList = this.getTransactionList();
+        for (Iterator itT = transList.iterator(); itT.hasNext();) {
+            Transaction transaction = (Transaction) itT.next();
+            if (transaction.getDatePosted().after(result)) {
+                result = transaction.getDatePosted();
             }
-            return result;
+        }
+        return result;
     }
 
     /**
@@ -288,20 +284,25 @@ public class OFXFileHelper {
     }
 
     /**
-     * Find the correspondent transaction based on ID
+     * Find the correspondent transaction based on ID The rules for match 1 - Dates equals 2 - Amount 3 - Check number ends with
+     * source account(global config?)
      *
      * @param target
      * @return
      * @throws OFXException
      */
-    protected Transaction getMatchTransaction(Transaction target) throws OFXException {
+    protected Transaction getMatchTransaction(Transaction target, String sourceAccount) throws OFXException {
         Transaction result = null;
+         * erro de busca
         List<Transaction> tl = this.getTransactionList();
-        for (Iterator itT = tl.iterator(); itT.hasNext();) {
-            Transaction transaction = (Transaction) itT.next();
-            if (transaction.getId().equals(target.getId())) {
-                result = transaction;
-                break;
+        for (Transaction transaction : tl) {
+            if (transaction.getDatePosted().equals(target.getDatePosted())) {
+                if (transaction.getAmount().equals(target.getAmount())) {
+                    if (transaction.getCheckNumber().endsWith(sourceAccount)) {
+                        result = transaction;
+                        break;
+                    }
+                }
             }
         }
         return result;

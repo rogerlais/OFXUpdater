@@ -3,9 +3,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.io.OFXParseException;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
@@ -18,7 +16,6 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import java.nio.file.Paths;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import org.apache.commons.io.FilenameUtils;
 
 public class FXMLController implements Initializable {
 
@@ -104,7 +101,7 @@ public class FXMLController implements Initializable {
             slaveOFX.read();
 
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
-            controller.exportCSVTransactionPairs("D:\\Temp\\Out.csv");
+            controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
 
             //Salva como outro ofx no mesmo caminho com sufixo alterado
             BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
