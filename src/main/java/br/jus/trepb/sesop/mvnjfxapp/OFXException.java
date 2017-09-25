@@ -11,8 +11,15 @@ package br.jus.trepb.sesop.mvnjfxapp;
  */
 public class OFXException extends Exception {
 
-    OFXException(String message) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Only to silent hints
+     *
+     * @param message
+     */
+    public OFXException(String message) {
+        super(message);
     }
 
 }

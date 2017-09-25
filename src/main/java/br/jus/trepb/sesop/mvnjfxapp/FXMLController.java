@@ -82,7 +82,7 @@ public class FXMLController implements Initializable {
     }
 
     @FXML
-    private void handleButtonExecute(ActionEvent event) throws IOException, OFXParseException {
+    private void handleButtonExecute(ActionEvent event) {
 
         //PRE: 2 filenames and valids ofx files
         System.out.println("Iniciando operação!");

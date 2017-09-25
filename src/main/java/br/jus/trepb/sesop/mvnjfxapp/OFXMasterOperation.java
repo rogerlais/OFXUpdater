@@ -8,6 +8,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
@@ -165,7 +166,7 @@ public class OFXMasterOperation {
      * @throws IOException
      * @throws OFXParseException
      */
-    protected void exportCSVTransactionPairs(String filename) throws OFXException, IOException {
+    protected void exportCSVTransactionPairs(String filename) throws OFXException {
         StringBuilder result = new StringBuilder();
         result.append("ACCOUNT-MASTER,ACCOUNT-SLAVE,DTPOSTED-MASTER,DTPOSTED-SLAVE,TRNTYPE-MASTER,TRNTYPE-SLAVE,"
                 + "DTAVAILABLE-MASTER,DTAVAILABLE-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
@@ -200,12 +201,55 @@ public class OFXMasterOperation {
                 }
             }
         }
-        Writer fw = new FileWriter(filename);
-        fw.write(result.toString());
-        fw.close();
+
+        try {
+            Writer fw = new FileWriter(filename);
+            fw.write(result.toString());
+            fw.close();
+        } catch (IOException iOException) {
+            throw new OFXException("Erro salvando arquivo CSV com os batimentos das transações:\r\n" + iOException.getMessage());
+        }
     }
 
-    private void checkOwners() {
+    private void checkOwners() throws OFXException {
         //TODO roger para master e MV para slave, numero de agencia e conta correspondentes
+        //Dados da conta master
+        String masterFullAgency = GlobalConfig.OLD_MASTER_AGENCY + "-" + GlobalConfig.OLD_MASTER_AGENCY_DV;
+        String masterFullAccount = GlobalConfig.OLD_MASTER_ACCOUNT + "-" + GlobalConfig.OLD_MASTER_ACCOUNT_DV;
+        if ( //teste de origem
+                (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
+                | //or
+                (!this.master.getAccount().getAccountNumber().equals(masterFullAccount)) //conta
+                ) {
+            throw new OFXException("Dados para arquivo master inconsistentes");
+        }
+
+        //Dados da conta slave
+        String slaveFullAgency = GlobalConfig.OLD_SLAVE_AGENCY + "-" + GlobalConfig.OLD_SLAVE_AGENCY_DV;
+        String slaveFullAccount = GlobalConfig.OLD_SLAVE_ACCOUNT + "-" + GlobalConfig.OLD_SLAVE_ACCOUNT_DV;
+        if ( //teste de origem
+                (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
+                | //or
+                (!this.slave.getAccount().getAccountNumber().equals(slaveFullAccount)) //conta
+                ) {
+            throw new OFXException("Dados para arquivo slave inconsistentes");
+        }
+
+    }
+
+    /**
+     *
+     */
+    public void saveUpdatedOFX() throws OFXException {
+        //Dados da conta master
+        BankAccountDetails mAccount = this.master.getAccount();
+        mAccount.setBranchId(GlobalConfig.NEW_MASTER_AGENCY + "-" + GlobalConfig.NEW_MASTER_AGENCY_DV);
+        mAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
+        //Dados da conta slave
+        BankAccountDetails sAccount = this.slave.getAccount();
+        sAccount.setBranchId(GlobalConfig.NEW_SLAVE_AGENCY + "-" + GlobalConfig.NEW_SLAVE_AGENCY_DV);
+        sAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
+        -sdfsdfs -
+
     }
 }

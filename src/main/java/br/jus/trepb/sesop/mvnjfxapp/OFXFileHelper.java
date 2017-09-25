@@ -293,11 +293,10 @@ public class OFXFileHelper {
      */
     protected Transaction getMatchTransaction(Transaction target, String sourceAccount) throws OFXException {
         Transaction result = null;
-         * erro de busca
         List<Transaction> tl = this.getTransactionList();
         for (Transaction transaction : tl) {
             if (transaction.getDatePosted().equals(target.getDatePosted())) {
-                if (transaction.getAmount().equals(target.getAmount())) {
+                if (transaction.getAmount() == (target.getAmount() * -1)) { //valor deve ser negativo(dual)
                     if (transaction.getCheckNumber().endsWith(sourceAccount)) {
                         result = transaction;
                         break;
@@ -348,6 +347,10 @@ public class OFXFileHelper {
         } else {
             return "";
         }
+    }
+
+    public BankAccountDetails getAccount() throws OFXException {
+        return this.getBankSetRerponseTransaction(0).getMessage().getAccount();
     }
 
 }
