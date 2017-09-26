@@ -101,6 +101,7 @@ public class FXMLController implements Initializable {
             slaveOFX.read();
 
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
+            controller.saveUpdatedOFX();
             controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
 
             //Salva como outro ofx no mesmo caminho com sufixo alterado

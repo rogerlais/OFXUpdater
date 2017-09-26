@@ -256,7 +256,7 @@ public class OFXMasterOperation {
             this.updateTransaction(mTrans, true);
         }
 
-        List<Transaction> sTL = this.master.getTransactionList();
+        List<Transaction> sTL = this.slave.getTransactionList();  //Varre as transações do slave, exceto as já atualizadas
         for (Transaction sTrans : sTL) {
             if (sTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
                 this.updateTransaction(sTrans, false);
@@ -264,25 +264,36 @@ public class OFXMasterOperation {
         }
     }
 
-    private String createChekNumRefNumPair(String srcAccount, String srcBranch, String destAccount, String destBranch) {
+    private void createChekNumRefNumPair(Transaction masterTrans, Transaction slaveTrans) throws OFXException {
         //MasterAG = 3612-9
         //MasterAccount = 55898-2
         //SlaveAg = 3501-7
         //SlaveAccount = 21038-2
 
         //Para operação de master-> slave foi gerado:
-        //<CHECKNUM>501000021038</CHECKNUM>  // 501000 021038  3[501000 021038V
+        //<CHECKNUM>501000021038</CHECKNUM>  // 501000 021038  3[501000] 021038V
         //<REFNUM>603.501.000.021.038</REFNUM> //603.501.000.021.038
 
         // Para operação de slave-> master foi gerado:
         //<CHECKNUM>612000055898</CHECKNUM>
         //<REFNUM>603.612.000.055.898</REFNUM>
-        final char dv = 'V';
-        String ctxSrcAccount = Strings.padStart(srcAccount + dv, 7, '0');
-        String ctxDestAccout = Strings.padStart(destAccount + dv, 7, '0');
-        String ctxSrcBranch = Strings.padStart(srcBranch, 6, '0');
-        String ctxDestBranch = Strings.padStart(destBranch, 6, '0');
-        String newCheckNum = "3[50100] + 021038"
+        (
+                troca literal  dos dados
+        )
+        if (masterTrans.getCheckNumber().equals("501000021038") && slaveTrans.getCheckNumber().equals("612000055898")) {
+            if (masterTrans.getReferenceNumber().equals("603.501.000.021.038") && slaveTrans.getReferenceNumber().equals("603.612.000.055.898")) {
+                masterTrans.setCheckNumber("5010000" + GlobalConfig.OLD_SLAVE_ACCOUNT);
+                String dotedString = "60" + GlobalConfig.OLD_SLAVE_AGENCY + "000" + GlobalConfig.OLD_SLAVE_ACCOUNT;
+                dotedString = this.regularTokenizer(dotedString, ".", 3, 1);
+                masterTrans.setReferenceNumber(dotedString);
+
+                slaveTrans.setCheckNumber("");
+            } else {
+                throw new OFXException("pares para \"RefNum\" divergem para esta transação");
+            }
+        } else {
+            throw new OFXException("pares para \"CheckNum\" divergem para esta transação");
+        }
     }
 
     private void updateTransaction(Transaction trans, boolean isMaster) throws OFXException {
@@ -291,14 +302,23 @@ public class OFXMasterOperation {
             // 1 - Checknum(transf para  conta slave ou vice-versa)
             // 2 - Memo(contem palavras reservadas)
 
-            //
-            String sourceAccount = GlobalConfig.OLD_MASTER_ACCOUNT;
-            if (trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_AGENCY)) {  //Transferencia entre master-slave
-                Transaction sTrans = this.slave.getMatchTransaction(trans, sourceAccount);
+            if (trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {  //Transferencia entre master-slave
+                Transaction sTrans = this.slave.getMatchTransaction(trans, GlobalConfig.OLD_MASTER_ACCOUNT);
+                if (sTrans == null) {
+                    throw new OFXException("Erro pareando transação para atualização");
+                }
+                this.createChekNumRefNumPair(trans, sTrans);
 
             }
         } else { //tratamento para transações do slave
 
         }
+    }
+
+    private String regularTokenizer(String dotedString, String string, int i, int i0) {
+        (
+                negativo direita  esquerda
+        , positivo o natural
+    )
     }
 }

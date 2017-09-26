@@ -38,7 +38,7 @@ public class GlobalConfig {
     
     public static final String NEW_MASTER_ACCOUNT = "00495";
 
-    public static final String NEW_MASTER_ACCOUNT_DV = "00495";
+    public static final String NEW_MASTER_ACCOUNT_DV = "2";
 
     //Dados para a conta simulada slave    
     public static final String NEW_SLAVE_ACCOUNT = "6916";
