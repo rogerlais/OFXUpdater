@@ -5,6 +5,7 @@
  */
 package br.jus.trepb.sesop.mvnjfxapp;
 
+import com.google.common.base.Strings;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
@@ -249,7 +250,55 @@ public class OFXMasterOperation {
         BankAccountDetails sAccount = this.slave.getAccount();
         sAccount.setBranchId(GlobalConfig.NEW_SLAVE_AGENCY + "-" + GlobalConfig.NEW_SLAVE_AGENCY_DV);
         sAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
-        -sdfsdfs -
+        List<Transaction> mTL = this.master.getTransactionList();
+        for (Transaction mTrans : mTL) {
+            mTrans.setTempId("self=" + mTrans.getId());
+            this.updateTransaction(mTrans, true);
+        }
 
+        List<Transaction> sTL = this.master.getTransactionList();
+        for (Transaction sTrans : sTL) {
+            if (sTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
+                this.updateTransaction(sTrans, false);
+            }
+        }
+    }
+
+    private String createChekNumRefNumPair(String srcAccount, String srcBranch, String destAccount, String destBranch) {
+        //MasterAG = 3612-9
+        //MasterAccount = 55898-2
+        //SlaveAg = 3501-7
+        //SlaveAccount = 21038-2
+
+        //Para operação de master-> slave foi gerado:
+        //<CHECKNUM>501000021038</CHECKNUM>  // 501000 021038  3[501000 021038V
+        //<REFNUM>603.501.000.021.038</REFNUM> //603.501.000.021.038
+
+        // Para operação de slave-> master foi gerado:
+        //<CHECKNUM>612000055898</CHECKNUM>
+        //<REFNUM>603.612.000.055.898</REFNUM>
+        final char dv = 'V';
+        String ctxSrcAccount = Strings.padStart(srcAccount + dv, 7, '0');
+        String ctxDestAccout = Strings.padStart(destAccount + dv, 7, '0');
+        String ctxSrcBranch = Strings.padStart(srcBranch, 6, '0');
+        String ctxDestBranch = Strings.padStart(destBranch, 6, '0');
+        String newCheckNum = "3[50100] + 021038"
+    }
+
+    private void updateTransaction(Transaction trans, boolean isMaster) throws OFXException {
+        if (isMaster) {
+            //gatilhos para necessidade de alterações
+            // 1 - Checknum(transf para  conta slave ou vice-versa)
+            // 2 - Memo(contem palavras reservadas)
+
+            //
+            String sourceAccount = GlobalConfig.OLD_MASTER_ACCOUNT;
+            if (trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_AGENCY)) {  //Transferencia entre master-slave
+                Transaction sTrans = this.slave.getMatchTransaction(trans, sourceAccount);
+
+            }
+        } else { //tratamento para transações do slave
+
+        }
     }
 }
