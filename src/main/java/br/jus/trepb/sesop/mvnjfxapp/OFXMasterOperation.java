@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Iterator;
 import java.util.List;
+import javafx.util.Pair;
 
 /**
  *
@@ -243,28 +244,38 @@ public class OFXMasterOperation {
      */
     public void saveUpdatedOFX() throws OFXException {
         //Dados da conta master
-        BankAccountDetails mAccount = this.master.getAccount();
-        mAccount.setBranchId(GlobalConfig.NEW_MASTER_AGENCY + "-" + GlobalConfig.NEW_MASTER_AGENCY_DV);
-        mAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
+        BankAccountDetails masterAccount = this.master.getAccount();
+        //Altera para os novos valores
+        masterAccount.setBranchId(GlobalConfig.NEW_MASTER_AGENCY + "-" + GlobalConfig.NEW_MASTER_AGENCY_DV);
+        masterAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
         //Dados da conta slave
-        BankAccountDetails sAccount = this.slave.getAccount();
-        sAccount.setBranchId(GlobalConfig.NEW_SLAVE_AGENCY + "-" + GlobalConfig.NEW_SLAVE_AGENCY_DV);
-        sAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
+        BankAccountDetails slaveAccount = this.slave.getAccount();
+        //Altera para os novos valores
+        slaveAccount.setBranchId(GlobalConfig.NEW_SLAVE_AGENCY + "-" + GlobalConfig.NEW_SLAVE_AGENCY_DV);
+        slaveAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
+
+        //Enumera e trata todas as transações da conta master
         List<Transaction> mTL = this.master.getTransactionList();
-        for (Transaction mTrans : mTL) {
-            mTrans.setTempId("self=" + mTrans.getId());
-            this.updateTransaction(mTrans, true);
+        for (Transaction masterTransaction : mTL) {
+            this.updateTransaction(masterTransaction, true);
         }
 
-        List<Transaction> sTL = this.slave.getTransactionList();  //Varre as transações do slave, exceto as já atualizadas
-        for (Transaction sTrans : sTL) {
-            if (sTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
-                this.updateTransaction(sTrans, false);
+        //Varre as transações do slave, exceto as já atualizadas
+        List<Transaction> sTL = this.slave.getTransactionList();
+        for (Transaction slaveTrans : sTL) {
+            if (slaveTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
+                this.updateTransaction(slaveTrans, false);
             }
         }
     }
 
     private void createChekNumRefNumPair(Transaction masterTrans, Transaction slaveTrans) throws OFXException {
+
+        //todo ver abaixo
+        //marter os 2 digitos iniciais do refnum(geralmente 60). Foi encontrado 52 uma vez roger recebendo de ze
+        // 22 para amiga de lauricio
+        //todo ver abaixo
+        //caso os 4 digitos de refnum sejam a propria conta, implica em operação com formatação diferente
         //MasterAG = 3612-9
         //MasterAccount = 55898-2
         //SlaveAg = 3501-7
@@ -277,17 +288,19 @@ public class OFXMasterOperation {
         // Para operação de slave-> master foi gerado:
         //<CHECKNUM>612000055898</CHECKNUM>
         //<REFNUM>603.612.000.055.898</REFNUM>
-        (
-                troca literal  dos dados
-        )
+        //Busca literal por checknum e refnum que indiquem transferencia
         if (masterTrans.getCheckNumber().equals("501000021038") && slaveTrans.getCheckNumber().equals("612000055898")) {
             if (masterTrans.getReferenceNumber().equals("603.501.000.021.038") && slaveTrans.getReferenceNumber().equals("603.612.000.055.898")) {
-                masterTrans.setCheckNumber("5010000" + GlobalConfig.OLD_SLAVE_ACCOUNT);
-                String dotedString = "60" + GlobalConfig.OLD_SLAVE_AGENCY + "000" + GlobalConfig.OLD_SLAVE_ACCOUNT;
-                dotedString = this.regularTokenizer(dotedString, ".", 3, 1);
+                //Novos dados para a transação master
+                masterTrans.setCheckNumber("5010000" + GlobalConfig.NEW_SLAVE_ACCOUNT);
+                String dotedString = "60" + GlobalConfig.NEW_SLAVE_AGENCY + "0000" + GlobalConfig.NEW_SLAVE_ACCOUNT;
+                dotedString = this.regularTokenizer(dotedString, ".", 3, false);  //sentido reverso como em nossa cultura
                 masterTrans.setReferenceNumber(dotedString);
-
-                slaveTrans.setCheckNumber("");
+                //Novos dados para a transação slave
+                slaveTrans.setCheckNumber("60" + GlobalConfig.NEW_MASTER_AGENCY_DV + "0000" + GlobalConfig.NEW_MASTER_ACCOUNT);
+                dotedString = "60" + GlobalConfig.NEW_MASTER_AGENCY + "0000" + GlobalConfig.NEW_MASTER_ACCOUNT;
+                dotedString = this.regularTokenizer(dotedString, ".", 3, false);
+                slaveTrans.setReferenceNumber(dotedString);
             } else {
                 throw new OFXException("pares para \"RefNum\" divergem para esta transação");
             }
@@ -299,26 +312,24 @@ public class OFXMasterOperation {
     private void updateTransaction(Transaction trans, boolean isMaster) throws OFXException {
         if (isMaster) {
             //gatilhos para necessidade de alterações
-            // 1 - Checknum(transf para  conta slave ou vice-versa)
+            // 1 - Checknum(transf para conta slave ou vice-versa)
             // 2 - Memo(contem palavras reservadas)
 
-            if (trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {  //Transferencia entre master-slave
+            if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
+                    trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
+                    | //or
+                    trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) //transação envolve slave
+            {
+                BBTransactionHelper originalBBTrans = new BBTransactionHelper(GlobalConfig.OLD_SLAVE_AGENCY, GlobalConfig.OLD_SLAVE_ACCOUNT);
                 Transaction sTrans = this.slave.getMatchTransaction(trans, GlobalConfig.OLD_MASTER_ACCOUNT);
-                if (sTrans == null) {
+                if (sTrans != null) {
+                    this.createChekNumRefNumPair(trans, sTrans);
+                } else {
                     throw new OFXException("Erro pareando transação para atualização");
                 }
-                this.createChekNumRefNumPair(trans, sTrans);
-
             }
         } else { //tratamento para transações do slave
-
+                //Busca pelo correspondente no master - até agora sem utilidade, pois as alterações serão realizadas apenas no caso positivo
         }
-    }
-
-    private String regularTokenizer(String dotedString, String string, int i, int i0) {
-        (
-                negativo direita  esquerda
-        , positivo o natural
-    )
     }
 }
