@@ -20,7 +20,7 @@ import java.util.TimeZone;
  *
  * @author roger
  */
-public class BBOFXStringConversation extends DefaultStringConversion {
+public class BBOFXStringConvertion extends DefaultStringConversion {
 
     private TimeZone LocalTimeZone = TimeZone.getTimeZone("BRT");
 
