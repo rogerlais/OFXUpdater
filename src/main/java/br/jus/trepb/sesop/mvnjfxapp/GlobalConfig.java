@@ -16,7 +16,7 @@ public class GlobalConfig {
     //Dados originais conta master
     public static final String OLD_MASTER_BRANCH = "3612";
 
-    public static final String OLD_MASTER_AGENCY_DV = "9";
+    public static final String OLD_MASTER_BRANCH_DV = "9";
 
     public static final String OLD_MASTER_ACCOUNT = "55898";
 
@@ -27,7 +27,7 @@ public class GlobalConfig {
     //Dados originais conta slave
     public static final String OLD_SLAVE_BRANCH = "3501";
 
-    public static final String OLD_SLAVE_AGENCY_DV = "7";
+    public static final String OLD_SLAVE_BRANCH_DV = "7";
 
     public static final String OLD_SLAVE_ACCOUNT = "21038";
 
@@ -38,9 +38,9 @@ public class GlobalConfig {
     //Dados para a conta simulada master
     public static final String NEW_MASTER_BRANCH = "3371";
 
-    public static final String NEW_MASTER_AGENCY_DV = "5";
+    public static final String NEW_MASTER_BRANCH_DV = "5";
     
-    public static final String NEW_MASTER_ACCOUNT = "0495";
+    public static final String NEW_MASTER_ACCOUNT = "495";
 
     public static final String NEW_MASTER_ACCOUNT_DV = "2";
 
@@ -51,6 +51,6 @@ public class GlobalConfig {
 
     public static final String NEW_SLAVE_BRANCH = "6682";
 
-    public static final String NEW_SLAVE_AGENCY_DV = "6";
+    public static final String NEW_SLAVE_BRANCH_DV = "6";
 
 }

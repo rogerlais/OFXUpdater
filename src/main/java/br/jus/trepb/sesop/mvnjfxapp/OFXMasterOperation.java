@@ -157,9 +157,17 @@ public class OFXMasterOperation {
         this.slave = slave;
         this.checkIntegrity();
         this.fakeList = new ArrayList<FakeRegister>();
-
-                * adicionar a entradas aqui
-                *
+        this.fakeList.add(
+                new FakeRegister(
+                        GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
+                        GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
+                        GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_BRANCH, GlobalConfig.NEW_MASTER_BRANCH_DV,
+                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
+        );
+        this.fakeList.add(new FakeRegister("3501", "7", "21038", "2", "MERCIA VIEIRA", "3371", "5", "495", "2", "CONTA AMOR", "master"));
+        this.fakeList.add(new FakeRegister("3612", "9", "55898", "2", "ROGERLAIS ANDR", "3371", "5", "495", "2", "CONTA AMOR", "master"));
+        this.fakeList.add(new FakeRegister("3612", "9", "55898", "2", "ROGERLAIS ANDR", "3371", "5", "495", "2", "CONTA AMOR", "master"));
+        //TODO: INSERIR DADOS DAS CONTAS A SEREM TRADUZIDAS ACIMA
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
@@ -222,7 +230,7 @@ public class OFXMasterOperation {
     private void checkOwners() throws OFXException {
         //TODO roger para master e MV para slave, numero de agencia e conta correspondentes
         //Dados da conta master
-        String masterFullAgency = GlobalConfig.OLD_MASTER_BRANCH + "-" + GlobalConfig.OLD_MASTER_AGENCY_DV;
+        String masterFullAgency = GlobalConfig.OLD_MASTER_BRANCH + "-" + GlobalConfig.OLD_MASTER_BRANCH_DV;
         String masterFullAccount = GlobalConfig.OLD_MASTER_ACCOUNT + "-" + GlobalConfig.OLD_MASTER_ACCOUNT_DV;
         if ( //teste de origem
                 (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
@@ -233,7 +241,7 @@ public class OFXMasterOperation {
         }
 
         //Dados da conta slave
-        String slaveFullAgency = GlobalConfig.OLD_SLAVE_BRANCH + "-" + GlobalConfig.OLD_SLAVE_AGENCY_DV;
+        String slaveFullAgency = GlobalConfig.OLD_SLAVE_BRANCH + "-" + GlobalConfig.OLD_SLAVE_BRANCH_DV;
         String slaveFullAccount = GlobalConfig.OLD_SLAVE_ACCOUNT + "-" + GlobalConfig.OLD_SLAVE_ACCOUNT_DV;
         if ( //teste de origem
                 (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
@@ -252,12 +260,12 @@ public class OFXMasterOperation {
         //Dados da conta master
         BankAccountDetails masterAccount = this.master.getAccount();
         //Altera para os novos valores
-        masterAccount.setBranchId(GlobalConfig.NEW_MASTER_BRANCH + "-" + GlobalConfig.NEW_MASTER_AGENCY_DV);
+        masterAccount.setBranchId(GlobalConfig.NEW_MASTER_BRANCH + "-" + GlobalConfig.NEW_MASTER_BRANCH_DV);
         masterAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
         //Dados da conta slave
         BankAccountDetails slaveAccount = this.slave.getAccount();
         //Altera para os novos valores
-        slaveAccount.setBranchId(GlobalConfig.NEW_SLAVE_BRANCH + "-" + GlobalConfig.NEW_SLAVE_AGENCY_DV);
+        slaveAccount.setBranchId(GlobalConfig.NEW_SLAVE_BRANCH + "-" + GlobalConfig.NEW_SLAVE_BRANCH_DV);
         slaveAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
 
         //Enumera e trata todas as transações da conta master
