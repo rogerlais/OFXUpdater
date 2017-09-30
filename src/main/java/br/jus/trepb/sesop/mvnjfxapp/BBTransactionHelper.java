@@ -4,7 +4,8 @@
 package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.google.common.base.Strings;
-import java.util.Arrays;
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
+import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -15,6 +16,70 @@ import java.util.Date;
  * @author roger
  */
 public class BBTransactionHelper {
+
+    private static String getModulo11(String campo) {
+        //Modulo 11 - 23456789 (type = 9)
+
+        int multiplicador = 9;
+        int multiplicacao;
+        int soma_campo = 0;
+
+        for (int i = campo.length(); i > 0; i--) {
+            multiplicacao = Integer.parseInt(campo.substring(i - 1, i)) * multiplicador;
+
+            soma_campo = soma_campo + multiplicacao;
+
+            multiplicador--;
+            if (multiplicador < 2) {
+                multiplicador = 9;
+            }
+        }
+        int dac = (soma_campo % 11);
+        if (dac == 10) {
+            return "X";
+        }
+        return ((Integer) dac).toString();
+    }
+
+    public BBTransactionHelper(BankAccountDetails sourceAccount, Transaction trans) throws OFXException {
+        //todo: criar instancia a partir de dados reais
+        //<CHECKNUM>138000017235</CHECKNUM>
+        //<REFNUM>521.138.000.017.235</REFNUM>
+        String refNum = trans.getReferenceNumber();
+        String chkNum = trans.getCheckNumber();
+
+        if (chkNum.endsWith(sourceAccount.getAccountNumber())) { //transação interna c/c <-> poupança
+            //todo: coleta de dados para operação interna
+            throw new OFXException("Operação não tratada ainda");
+        } else {
+            //movimentação de entrada/saida ocorrida
+            switch (refNum.length()) {
+                case GlobalConfig.REFNUM_TRANSFER_LENGTH: {  //operação de transferencia
+                    this.operationCode = Integer.parseInt(refNum.substring(0, 2));
+                    switch (this.operationCode) {
+                        case 51:
+                        case 52:
+                        case 60: {
+                            this.targetAccount = chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH);
+                            this.targetAccountDV = getModulo11(this.targetAccount);
+                            this.targetBranch = refNum.substring(2, 7).replace(".", "");  //pega 5 e exclui o ponto
+                            break;
+                        }
+                        case 99: {  //pagamento de convenio(agua, luz, telefone, etc)
+                            break;
+                        }
+                        default: {
+                            throw new OFXException("Código de operação não suportado.");
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    this.operationCode = 0;  //anula unica não nula anteriormente
+                }
+            }
+        }
+    }
 
     private String targetAccountDV;
 
@@ -185,6 +250,7 @@ public class BBTransactionHelper {
 
     public String getFakeTargetBranch() {
         //TODO: pegar agencia para fake de fabiana e pai
+        --usar a lista agora
         switch (this.targetBranch) {
             case GlobalConfig.OLD_MASTER_BRANCH: {
                 return GlobalConfig.NEW_MASTER_BRANCH;
@@ -213,12 +279,16 @@ public class BBTransactionHelper {
     }
 
     public String getFakeCheckNum() {
-        String tempCode = String.format("%02d", this.operationCode); //nâo usado
-        String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-        String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-        String tempVariant = String.format("%02d", this.variantCode);
-        String result = tempBranch.substring(1) + tempVariant + tempAccount;
-        return result;
+        if (this.targetBranch != null) {
+            String tempCode = String.format("%02d", this.operationCode); //nâo usado
+            String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+            String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+            String tempVariant = String.format("%02d", this.variantCode);
+            String result = tempBranch.substring(1) + tempVariant + tempAccount;
+            return result;
+        } else {
+            return null;
+        }
     }
 
 }

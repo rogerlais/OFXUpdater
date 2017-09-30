@@ -5,7 +5,6 @@
  */
 package br.jus.trepb.sesop.mvnjfxapp;
 
-import com.google.common.base.Strings;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
@@ -29,7 +28,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javafx.util.Pair;
 
 /**
  *
@@ -157,6 +155,8 @@ public class OFXMasterOperation {
         this.slave = slave;
         this.checkIntegrity();
         this.fakeList = new ArrayList<FakeRegister>();
+        //todo: Buscar ler dados de arquivo de configuração
+        //Mané
         this.fakeList.add(
                 new FakeRegister(
                         GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
@@ -164,10 +164,18 @@ public class OFXMasterOperation {
                         GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_BRANCH, GlobalConfig.NEW_MASTER_BRANCH_DV,
                         GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
         );
-        this.fakeList.add(new FakeRegister("3501", "7", "21038", "2", "MERCIA VIEIRA", "3371", "5", "495", "2", "CONTA AMOR", "master"));
-        this.fakeList.add(new FakeRegister("3612", "9", "55898", "2", "ROGERLAIS ANDR", "3371", "5", "495", "2", "CONTA AMOR", "master"));
-        this.fakeList.add(new FakeRegister("3612", "9", "55898", "2", "ROGERLAIS ANDR", "3371", "5", "495", "2", "CONTA AMOR", "master"));
-        //TODO: INSERIR DADOS DAS CONTAS A SEREM TRADUZIDAS ACIMA
+        //MV
+        this.fakeList.add(
+                new FakeRegister(
+                        GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
+                        GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
+                        GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_BRANCH, GlobalConfig.NEW_SLAVE_BRANCH_DV,
+                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "slave")
+        );
+        //Pai
+        this.fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO", "PAI(DOACAO UNIVERSAL - Aleluia!)"));
+        //Irmã
+        this.fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS", "Fabiana(Instituto ccancer Dr. Arnaldo"));
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
@@ -271,23 +279,19 @@ public class OFXMasterOperation {
         //Enumera e trata todas as transações da conta master
         List<Transaction> mTL = this.master.getTransactionList();
         for (Transaction masterTransaction : mTL) {
-            this.updateTransaction(masterTransaction, true);
+            this.updateTransaction(masterAccount, masterTransaction);
         }
 
         //Varre as transações do slave, exceto as já atualizadas
         List<Transaction> sTL = this.slave.getTransactionList();
         for (Transaction slaveTrans : sTL) {
             if (slaveTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
-                this.updateTransaction(slaveTrans, false);
+                this.updateTransaction(slaveAccount, slaveTrans);
             }
         }
     }
 
     private void updatePair(Transaction masterTrans, Transaction slaveTrans) throws OFXException {
-
-        //todo ver abaixo
-        //marter os 2 digitos iniciais do refnum(geralmente 60). Foi encontrado 52 uma vez roger recebendo de ze
-        // 22 para amiga de lauricio
         //todo ver abaixo
         //caso os 4 digitos de refnum sejam a propria conta, implica em operação com formatação diferente
         String operStr = masterTrans.getReferenceNumber().substring(0, 2);  //A mesma operação vale para ambos
@@ -326,26 +330,35 @@ public class OFXMasterOperation {
         }
     }
 
-    private void updateTransaction(Transaction trans, boolean isMaster) throws OFXException {
-        if (isMaster) {
-            //gatilhos para necessidade de alterações
-            // 1 - Checknum(transf para conta slave ou vice-versa)
-            // 2 - Memo(contem palavras reservadas)
+    private void updateTransaction(BankAccountDetails account, Transaction trans) throws OFXException {
 
+        String refNum = trans.getReferenceNumber();
+        String chkNum = trans.getCheckNumber();
+
+        BBTransactionHelper bbTrans = new BBTransactionHelper(account, trans);
+        if (bbTrans.getFakeCheckNum() == null) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
                     trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
                     | //or
                     trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) //transação envolve slave
             {
-                Transaction sTrans = this.slave.getMatchTransaction(trans, GlobalConfig.OLD_MASTER_ACCOUNT);
-                if (sTrans != null) {
-                    this.updatePair(trans, sTrans);
-                } else {
-                    throw new OFXException("Erro pareando transação para atualização");
-                }
+                throw new OFXException("Transação não capturada pelo mapeamento");
             }
-        } else { //tratamento para transações do slave
-                //Busca pelo correspondente no master - até agora sem utilidade, pois as alterações serão realizadas apenas no caso positivo
+        } else {
+            //gatilhos para necessidade de alterações
+            // 1 - Checknum(transf para conta slave ou vice-versa)
+            // 2 - Memo(contem palavras reservadas)
+            trans.setCheckNumber(bbTrans.getFakeCheckNum());
+            trans.setReferenceNumber(bbTrans.getFakeRefNum());
+            trans.setMemo(bbTrans.getMemo(trans.getDatePosted(), trans.getReferenceNumber()));  //avaliar parametros corretos
+            /*
+            Transaction sTrans = this.slave.getMatchTransaction(trans, GlobalConfig.OLD_MASTER_ACCOUNT);
+            if (sTrans != null) {
+                this.updatePair(trans, sTrans);
+            } else {
+                throw new OFXException("Erro pareando transação para atualização");
+            }
+             */
         }
     }
 }

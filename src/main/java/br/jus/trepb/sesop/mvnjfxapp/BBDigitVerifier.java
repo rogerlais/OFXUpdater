@@ -100,7 +100,6 @@ public class BBDigitVerifier {
          */
         String pesoBB = "98765432";
 
-
         int cycleSum = 0;
         int remaind;
         int calcDigit;

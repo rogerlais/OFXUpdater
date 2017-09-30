@@ -39,12 +39,12 @@ public class GlobalConfig {
     public static final String NEW_MASTER_BRANCH = "3371";
 
     public static final String NEW_MASTER_BRANCH_DV = "5";
-    
+
     public static final String NEW_MASTER_ACCOUNT = "495";
 
     public static final String NEW_MASTER_ACCOUNT_DV = "2";
 
-    //Dados para a conta simulada slave    
+    //Dados para a conta simulada slave
     public static final String NEW_SLAVE_ACCOUNT = "6916";
 
     public static final String NEW_SLAVE_ACCOUNT_DV = "7";
@@ -52,5 +52,9 @@ public class GlobalConfig {
     public static final String NEW_SLAVE_BRANCH = "6682";
 
     public static final String NEW_SLAVE_BRANCH_DV = "6";
+
+    public static final int ACCOUNT_BB_LENGTH = 7;  //tamanho da conta do BB
+
+    public static final int REFNUM_TRANSFER_LENGTH = 19;
 
 }
