@@ -35,7 +35,6 @@ import java.util.List;
  */
 public class OFXMasterOperation {
 
-    private List<FakeRegister> fakeList;
 
     static public void displayContent(OFXFileHelper ofxH) throws IOException, OFXParseException {
 
@@ -154,28 +153,7 @@ public class OFXMasterOperation {
         this.master = master;
         this.slave = slave;
         this.checkIntegrity();
-        this.fakeList = new ArrayList<FakeRegister>();
-        //todo: Buscar ler dados de arquivo de configuração
-        //Mané
-        this.fakeList.add(
-                new FakeRegister(
-                        GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
-                        GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
-                        GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_BRANCH, GlobalConfig.NEW_MASTER_BRANCH_DV,
-                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
-        );
-        //MV
-        this.fakeList.add(
-                new FakeRegister(
-                        GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
-                        GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
-                        GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_BRANCH, GlobalConfig.NEW_SLAVE_BRANCH_DV,
-                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "slave")
-        );
-        //Pai
-        this.fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO", "PAI(DOACAO UNIVERSAL - Aleluia!)"));
-        //Irmã
-        this.fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS", "Fabiana(Instituto ccancer Dr. Arnaldo"));
+        BBTransactionHelper.loadFakeList(); //carga dos dados das contas e mapeamentos
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
