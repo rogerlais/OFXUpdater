@@ -22,6 +22,7 @@ public class FakeRegister {
     private String fakeAccountVD;
     private String fakeShortName;
     private String comment;
+    private String cashOutAccount;
 
     /**
      * @return the trueBranch
@@ -180,7 +181,7 @@ public class FakeRegister {
     public FakeRegister( //constructor code-format
             String trueBranch, String trueBranchVD, String trueAccount, String trueAccountVD, String trueShortName,
             String fakeBranch, String fakeBranchVD, String fakeAccount, String fakeAccountVD, String fakeShortName,
-            String comment) {
+            String cashOutAccount, String comment) {
 
         this.trueBranch = trueBranch; //todo: validar entradas
         this.trueBranchVD = trueBranchVD;
@@ -192,8 +193,22 @@ public class FakeRegister {
         this.fakeAccount = fakeAccount;
         this.fakeAccountVD = fakeAccountVD;
         this.fakeShortName = fakeShortName;
+        this.cashOutAccount = cashOutAccount;
         this.comment = comment;
+    }
 
+    /**
+     * @return the cashOutAccount
+     */
+    public String getCashOutAccount() {
+        return cashOutAccount;
+    }
+
+    /**
+     * @param cashOutAccount the cashOutAccount to set
+     */
+    public void setCashOutAccount(String cashOutAccount) {
+        this.cashOutAccount = cashOutAccount;
     }
 
 }

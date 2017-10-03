@@ -45,19 +45,23 @@ public class BBTransactionHelper {
 
     private FakeRegister fakeData;
 
-    protected FakeRegister getFakeData() {
+    protected FakeRegister getFakeData() throws OFXException {
         if (this.fakeData != null) {
             return this.fakeData;
         } else {
             FakeRegister result = null;
-            for (FakeRegister reg : fakeList) {
-                if ( // test all attrs
+            if (this.targetBranch != null) {
+                for (FakeRegister reg : fakeList) {
+                    if ( // test all attrs
                         Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
                         & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
-                { //todo * realizar a comparação pelo valor numerico
-                    result = reg;
-                    break;
+                    { //todo * realizar a comparação pelo valor numerico
+                        result = reg;
+                        break;
+                    }
                 }
+            } else {
+                throw new OFXException("Chave(conta) para busca dos dados nula!");
             }
             this.fakeData = result;
             return this.fakeData;
@@ -70,13 +74,13 @@ public class BBTransactionHelper {
 
         fakeList = new ArrayList<FakeRegister>();
         //todo: Buscar ler dados de arquivo de configuração
-        //Mané
+        //Fumo Junior
         fakeList.add(
                 new FakeRegister(
                         GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
                         GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
                         GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_ACCOUNT, GlobalConfig.NEW_MASTER_ACCOUNT_DV,
-                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
+                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "9516565", "master")
         );
         //MV
         fakeList.add(
@@ -84,27 +88,28 @@ public class BBTransactionHelper {
                         GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
                         GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
                         GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_ACCOUNT, GlobalConfig.NEW_SLAVE_ACCOUNT_DV,
-                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "slave")
+                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "7977137", "slave")
         );
         //Pai
         fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO",
-                "PAI(DOACAO UNIVERSAL - Aleluia!)"));
+                null, "PAI(DOACAO UNIVERSAL - Aleluia!)"));
         //Irmã
         fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS",
-                "Fabiana(Instituto cancer Dr. Arnaldo"));
+                null, "Fabiana(Instituto cancer Dr. Arnaldo"));
     }
 
-    public BBTransactionHelper(BankAccountDetails sourceAccount, Transaction trans) throws OFXException {
+    public BBTransactionHelper(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
         //todo: criar instancia a partir de dados reais
         //<CHECKNUM>138000017235</CHECKNUM>
         //<REFNUM>521.138.000.017.235</REFNUM>
         String refNum = trans.getReferenceNumber();
         String chkNum = trans.getCheckNumber();
-        [operaç
-        ~eos de saque findam com 89516565 para o caso de roger e possuem comprimento de transferêncis
-        ]
 
-        if (chkNum.endsWith(sourceAccount.getAccountNumber())) { //transação interna c/c <-> poupança
+        this.targetAccount = GlobalConfig.trimChar(sourceAccount, '0');
+        this.targetBranch = GlobalConfig.trimChar(sourceBranch, '0');
+
+        //transação interna c/c <-> poupança ou saque da conta
+        if (chkNum.endsWith(sourceAccount) || (chkNum.endsWith(this.getFakeData().getCashOutAccount()))) {
             //todo: coleta de dados para operação interna
             throw new OFXException("Operação não tratada ainda");
         } else {
@@ -125,7 +130,19 @@ public class BBTransactionHelper {
                             break;
                         }
                         default: {
-                            throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                            this.targetBranch = sourceAccount; //Usar o valor de referência
+                            if ( //operação de saque conta master
+                                    (this.targetBranch.equals(GlobalConfig.OLD_MASTER_ACCOUNT)
+                                    && //bate como sendo saque
+                                    chkNum.endsWith(this.getFakeData().getCashOutAccount())) //conta saque
+                                    || ( //ou conta slave
+                                    (this.targetBranch.equals(GlobalConfig.OLD_SLAVE_ACCOUNT)
+                                    && //bate como sendo saque
+                                    chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
+                                break;
+                            } else {
+                                throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                            }
                         }
                     }
                     break;
@@ -242,7 +259,7 @@ public class BBTransactionHelper {
         return result;
     }
 
-    String getMemo(Date datePosted, String detail) {
+    String getMemo(Date datePosted, String detail) throws OFXException {
         Calendar cal = Calendar.getInstance();
         cal.setTime(datePosted);
         String result = "";
@@ -278,7 +295,7 @@ public class BBTransactionHelper {
         return result.trim();
     }
 
-    public String getFakeTargetAccount() {
+    public String getFakeTargetAccount() throws OFXException {
         FakeRegister reg = this.getFakeData();
         if (reg != null) {
             return reg.getFakeAccount();
@@ -287,7 +304,7 @@ public class BBTransactionHelper {
         }
     }
 
-    public String getFakeShortName() {
+    public String getFakeShortName() throws OFXException {
         FakeRegister reg = this.getFakeData();
         if (reg != null) {
             return reg.getFakeShortName();
@@ -296,7 +313,7 @@ public class BBTransactionHelper {
         }
     }
 
-    public String getFakeTargetAccountDV() {
+    public String getFakeTargetAccountDV() throws OFXException {
         FakeRegister reg = this.getFakeData();
         if (reg != null) {
             return reg.getFakeAccountVD();
@@ -305,7 +322,7 @@ public class BBTransactionHelper {
         }
     }
 
-    public String getFakeTargetBranch() {
+    public String getFakeTargetBranch() throws OFXException {
         //TODO: pegar agencia para fake de fabiana e pai
         FakeRegister reg = this.getFakeData();
         if (reg != null) {
@@ -331,7 +348,7 @@ public class BBTransactionHelper {
          */
     }
 
-    public String getFakeRefNum() {
+    public String getFakeRefNum() throws OFXException {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
         String tempCode = String.format("%02d", this.operationCode);
         String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
@@ -342,7 +359,7 @@ public class BBTransactionHelper {
         return result;
     }
 
-    public String getFakeCheckNum() {
+    public String getFakeCheckNum() throws OFXException {
         if (this.targetBranch != null) {
             String tempCode = String.format("%02d", this.operationCode); //nâo usado
             String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');

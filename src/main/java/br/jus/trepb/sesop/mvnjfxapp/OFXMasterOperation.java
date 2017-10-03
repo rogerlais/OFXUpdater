@@ -257,14 +257,14 @@ public class OFXMasterOperation {
         //Enumera e trata todas as transações da conta master
         List<Transaction> mTL = this.master.getTransactionList();
         for (Transaction masterTransaction : mTL) {
-            this.updateTransaction(masterAccount, masterTransaction);
+            this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
         }
 
         //Varre as transações do slave, exceto as já atualizadas
         List<Transaction> sTL = this.slave.getTransactionList();
         for (Transaction slaveTrans : sTL) {
             if (slaveTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
-                this.updateTransaction(slaveAccount, slaveTrans);
+                this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
             }
         }
     }
@@ -308,12 +308,12 @@ public class OFXMasterOperation {
         }
     }
 
-    private void updateTransaction(BankAccountDetails account, Transaction trans) throws OFXException {
+    private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
 
         String refNum = trans.getReferenceNumber();
         String chkNum = trans.getCheckNumber();
 
-        BBTransactionHelper bbTrans = new BBTransactionHelper(account, trans);
+        BBTransactionHelper bbTrans = new BBTransactionHelper(trans, sourceBranch, sourceAccount);
         if (bbTrans.getFakeCheckNum() == null) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
                     trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
