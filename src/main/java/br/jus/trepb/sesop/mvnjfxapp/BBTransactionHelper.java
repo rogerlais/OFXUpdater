@@ -52,8 +52,8 @@ public class BBTransactionHelper {
             FakeRegister result = null;
             for (FakeRegister reg : fakeList) {
                 if ( // test all attrs
-                    Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
-                    & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
+                        Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
+                        & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
                 { //todo * realizar a comparação pelo valor numerico
                     result = reg;
                     break;
@@ -72,24 +72,26 @@ public class BBTransactionHelper {
         //todo: Buscar ler dados de arquivo de configuração
         //Mané
         fakeList.add(
-            new FakeRegister(
-                GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
-                GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
-                GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_BRANCH, GlobalConfig.NEW_MASTER_BRANCH_DV,
-                GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
+                new FakeRegister(
+                        GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
+                        GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
+                        GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_ACCOUNT, GlobalConfig.NEW_MASTER_ACCOUNT_DV,
+                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "master")
         );
         //MV
         fakeList.add(
-            new FakeRegister(
-                GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
-                GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
-                GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_BRANCH, GlobalConfig.NEW_SLAVE_BRANCH_DV,
-                GlobalConfig.SLAVE_ACCOUNT_ALIAS, "slave")
+                new FakeRegister(
+                        GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
+                        GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
+                        GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_ACCOUNT, GlobalConfig.NEW_SLAVE_ACCOUNT_DV,
+                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "slave")
         );
         //Pai
-        fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO", "PAI(DOACAO UNIVERSAL - Aleluia!)"));
+        fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO",
+                "PAI(DOACAO UNIVERSAL - Aleluia!)"));
         //Irmã
-        fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS", "Fabiana(Instituto ccancer Dr. Arnaldo"));
+        fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS",
+                "Fabiana(Instituto cancer Dr. Arnaldo"));
     }
 
     public BBTransactionHelper(BankAccountDetails sourceAccount, Transaction trans) throws OFXException {
@@ -98,6 +100,9 @@ public class BBTransactionHelper {
         //<REFNUM>521.138.000.017.235</REFNUM>
         String refNum = trans.getReferenceNumber();
         String chkNum = trans.getCheckNumber();
+        [operaç
+        ~eos de saque findam com 89516565 para o caso de roger e possuem comprimento de transferêncis
+        ]
 
         if (chkNum.endsWith(sourceAccount.getAccountNumber())) { //transação interna c/c <-> poupança
             //todo: coleta de dados para operação interna
@@ -111,7 +116,7 @@ public class BBTransactionHelper {
                         case 51:
                         case 52:
                         case 60: {
-                            this.targetAccount = chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH);
+                            this.targetAccount = GlobalConfig.trimChar(chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH), '0');
                             this.targetAccountDV = getModulo11(this.targetAccount);
                             this.targetBranch = refNum.substring(2, 7).replace(".", "");  //pega 5 e exclui o ponto
                             break;
@@ -120,7 +125,7 @@ public class BBTransactionHelper {
                             break;
                         }
                         default: {
-                            throw new OFXException("Código de operação não suportado.");
+                            throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
                         }
                     }
                     break;
@@ -263,14 +268,13 @@ public class BBTransactionHelper {
         }
         if (prefix == null) {
             throw new UnsupportedOperationException(
-                String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
-                    this.operationCode));
+                    String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
+                            this.operationCode));
         }
         String dateStr = String.format("%1$02d/%2$02d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1);
         prefix += dateStr;
-        String sufix = Strings.padEnd(detail, 14, ' ');
-        result = prefix + " " + Strings.padEnd(this.getTargetBranch(), 4, ' ') + Strings.padStart(this.targetAccount, 11, ' ') + '-'
-            + this.targetAccountDV + " " + sufix; //?? como pegar o complemento
+        result = prefix + " " + Strings.padEnd(this.getFakeTargetBranch(), 4, ' ') + Strings.padStart(this.getFakeTargetAccount(), 11, ' ') + '-'
+                + this.getFakeTargetAccountDV() + " " + this.getFakeShortName(); //?? como pegar o complemento
         return result.trim();
     }
 
@@ -278,6 +282,24 @@ public class BBTransactionHelper {
         FakeRegister reg = this.getFakeData();
         if (reg != null) {
             return reg.getFakeAccount();
+        } else {
+            return null;
+        }
+    }
+
+    public String getFakeShortName() {
+        FakeRegister reg = this.getFakeData();
+        if (reg != null) {
+            return reg.getFakeShortName();
+        } else {
+            return null;
+        }
+    }
+
+    public String getFakeTargetAccountDV() {
+        FakeRegister reg = this.getFakeData();
+        if (reg != null) {
+            return reg.getFakeAccountVD();
         } else {
             return null;
         }

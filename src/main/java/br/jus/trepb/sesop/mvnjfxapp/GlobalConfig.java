@@ -57,4 +57,20 @@ public class GlobalConfig {
 
     public static final int REFNUM_TRANSFER_LENGTH = 19;
 
+    public static String trimChar(String str, char c) {
+        //TODO: Levar para biblioteca
+        int index = 0;
+        int maxL = str.length();
+        String result = "";
+        while (index < maxL) {
+            if (str.charAt(index) == c) {
+                index++;
+            } else {
+                result = str.substring(index);
+                return result;
+            }
+        }
+        return result;
+    }
+
 }

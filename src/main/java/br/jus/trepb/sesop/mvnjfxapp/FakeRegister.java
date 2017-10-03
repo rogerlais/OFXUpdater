@@ -178,11 +178,11 @@ public class FakeRegister {
     }
 
     public FakeRegister( //constructor code-format
-        String trueBranch, String trueBranchVD, String trueAccount, String trueAccountVD, String trueShortName,
-        String fakeBranch, String fakeBranchVD, String fakeAccount, String fakeAccountVD, String fakeShortName,
-        String comment) {
+            String trueBranch, String trueBranchVD, String trueAccount, String trueAccountVD, String trueShortName,
+            String fakeBranch, String fakeBranchVD, String fakeAccount, String fakeAccountVD, String fakeShortName,
+            String comment) {
 
-        this.trueBranch = trueBranch;
+        this.trueBranch = trueBranch; //todo: validar entradas
         this.trueBranchVD = trueBranchVD;
         this.trueAccount = trueAccount;
         this.trueAccountVD = trueAccountVD;
