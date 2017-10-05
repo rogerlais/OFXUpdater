@@ -60,7 +60,7 @@ public class BBTransactionHelper {
                     }
                 }
             } else {
-                throw new OFXException("Chave(conta) para busca dos dados nula!");
+                throw new OFXException("Chave(agência/conta) não encontrada na lista de substituições!");
             }
             this.fakeData = result;
             return this.fakeData;
@@ -352,12 +352,15 @@ public class BBTransactionHelper {
 
     public String getFakeRefNum() throws OFXException {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
-        String tempCode = String.format("%02d", this.operationCode);
-        String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-        String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-        String tempVariant = String.format("%02d", this.variantCode);
-        String result = tempCode + tempBranch + tempVariant + tempAccount;
-        result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
+        String result = null;
+        if (this.getFakeData() != null) {
+            String tempCode = String.format("%02d", this.operationCode);
+            String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+            String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+            String tempVariant = String.format("%02d", this.variantCode);
+            result = tempCode + tempBranch + tempVariant + tempAccount;
+            result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
+        }
         return result;
     }
 

@@ -270,9 +270,6 @@ public class OFXMasterOperation {
 
     private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
 
-        String refNum = trans.getReferenceNumber();
-        String chkNum = trans.getCheckNumber();
-
         BBTransactionHelper bbTrans = new BBTransactionHelper(trans, sourceBranch, sourceAccount);
         if (bbTrans.getFakeCheckNum() == null) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
@@ -283,26 +280,15 @@ public class OFXMasterOperation {
                 throw new OFXException("Transação não capturada pelo mapeamento");
             }
         } else {
-            //gatilhos para necessidade de alterações
-            // 1 - Checknum(transf para conta slave ou vice-versa)
-            // 2 - Memo(contem palavras reservadas)
             trans.setCheckNumber(bbTrans.getFakeCheckNum());
             trans.setReferenceNumber(bbTrans.getFakeRefNum());
             trans.setMemo(bbTrans.getMemo(trans.getDatePosted(), trans.getReferenceNumber()));  //avaliar parametros corretos
-            /*
-            Transaction sTrans = this.slave.getMatchTransaction(trans, GlobalConfig.OLD_MASTER_ACCOUNT);
-            if (sTrans != null) {
-                this.updatePair(trans, sTrans);
-            } else {
-                throw new OFXException("Erro pareando transação para atualização");
-            }
-             */
         }
-        //TODO: filtro final para o memo
-        trans.setMemo(this.finalFilterMemo(trans.getMemo()));
+        trans.setMemo(this.finalFilterMemo(trans.getMemo()));  //filtro final para o memo
     }
 
     private String finalFilterMemo(String memo) {
+        //TODO: A exemplo das contas registrar lista com os filtros para os memos contendo chave e novo valor
         if (memo.endsWith("TRIBUNAL REGIONAL ELEITORAL DA PARA")) {
             return memo.replace("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO");
         }
