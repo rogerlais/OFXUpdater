@@ -25,7 +25,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -34,7 +33,6 @@ import java.util.List;
  * @author Rogerlais
  */
 public class OFXMasterOperation {
-
 
     static public void displayContent(OFXFileHelper ofxH) throws IOException, OFXParseException {
 
@@ -242,7 +240,7 @@ public class OFXMasterOperation {
     /**
      *
      */
-    public void saveUpdatedOFX() throws OFXException {
+    public void saveUpdatedOFX() throws OFXException, IOException {
         //Dados da conta master
         BankAccountDetails masterAccount = this.master.getAccount();
         //Altera para os novos valores
@@ -263,49 +261,11 @@ public class OFXMasterOperation {
         //Varre as transações do slave, exceto as já atualizadas
         List<Transaction> sTL = this.slave.getTransactionList();
         for (Transaction slaveTrans : sTL) {
-            if (slaveTrans.getTempId() == null) {  //Não relacionado com transação em master, assim requer ajustes
-                this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
-            }
+            this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
         }
-    }
-
-    private void updatePair(Transaction masterTrans, Transaction slaveTrans) throws OFXException {
-        //todo ver abaixo
-        //caso os 4 digitos de refnum sejam a propria conta, implica em operação com formatação diferente
-        String operStr = masterTrans.getReferenceNumber().substring(0, 2);  //A mesma operação vale para ambos
-        int originalOperation = Integer.parseInt(operStr);
-        BBTransactionHelper trueMasterViewTrans = new BBTransactionHelper(GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT, GlobalConfig.OLD_SLAVE_ACCOUNT_DV);
-        trueMasterViewTrans.setOperationCode(originalOperation);
-        BBTransactionHelper fakeMasterViewTrans = new BBTransactionHelper(GlobalConfig.NEW_SLAVE_BRANCH, GlobalConfig.NEW_SLAVE_ACCOUNT, GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
-        fakeMasterViewTrans.setOperationCode(originalOperation);
-        BBTransactionHelper trueSlaveViewTrans = new BBTransactionHelper(GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT, GlobalConfig.OLD_MASTER_ACCOUNT_DV);
-        trueSlaveViewTrans.setOperationCode(originalOperation);
-        BBTransactionHelper fakeSlaveViewTrans = new BBTransactionHelper(GlobalConfig.NEW_MASTER_BRANCH, GlobalConfig.NEW_MASTER_ACCOUNT, GlobalConfig.NEW_MASTER_ACCOUNT_DV);
-        fakeSlaveViewTrans.setOperationCode(originalOperation);
-
-        if ( //todos os valores originais devem bater
-                masterTrans.getReferenceNumber().equals(trueMasterViewTrans.getRefNum()) //confere refnum para master
-                & //and
-                masterTrans.getCheckNumber().equals(trueMasterViewTrans.getCheckNum()) //confere checknum para master
-                & //and
-                slaveTrans.getReferenceNumber().equals(trueSlaveViewTrans.getRefNum()) //confere refnum para slave
-                & //and
-                slaveTrans.getCheckNumber().equals(trueSlaveViewTrans.getCheckNum())//confere checknum para slave
-                ) //if
-        {
-            //altera para os novos valores todos os atributos da master
-            masterTrans.setReferenceNumber(fakeMasterViewTrans.getRefNum());
-            masterTrans.setCheckNumber(fakeMasterViewTrans.getCheckNum());
-            masterTrans.setMemo(fakeMasterViewTrans.getMemo(masterTrans.getDatePosted(), GlobalConfig.SLAVE_ACCOUNT_ALIAS));
-
-            //altera para os novos valores todos os atributos da slave
-            slaveTrans.setReferenceNumber(fakeSlaveViewTrans.getRefNum());
-            slaveTrans.setCheckNumber(fakeSlaveViewTrans.getCheckNum());
-            slaveTrans.setMemo(fakeSlaveViewTrans.getMemo(slaveTrans.getDatePosted(), GlobalConfig.MASTER_ACCOUNT_ALIAS));
-
-        } else {
-            throw new OFXException("Divergência de valores para RefNum/CheckNum no par de transações para conciliação");
-        }
+        //Salva os novos arquivos com as alterações
+        this.master.writeTo(this.master.getStdOutputFilename());
+        this.slave.writeTo(this.slave.getStdOutputFilename());
     }
 
     private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
@@ -338,5 +298,20 @@ public class OFXMasterOperation {
             }
              */
         }
+        //TODO: filtro final para o memo
+        trans.setMemo(this.finalFilterMemo(trans.getMemo()));
+    }
+
+    private String finalFilterMemo(String memo) {
+        if (memo.endsWith("TRIBUNAL REGIONAL ELEITORAL DA PARA")) {
+            return memo.replace("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO");
+        }
+        if (memo.contains("81997636329")) {
+            return memo.replace("81997636329", "(MISTER-M)");
+        }
+        if (memo.contains("83998638007")) {
+            return memo.replace("83998638007", "(DESCONHECIDO-MV)");
+        }
+        return memo;
     }
 }

@@ -4,7 +4,6 @@
 package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.google.common.base.Strings;
-import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,8 +52,8 @@ public class BBTransactionHelper {
             if (this.targetBranch != null) {
                 for (FakeRegister reg : fakeList) {
                     if ( // test all attrs
-                        Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
-                        & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
+                            Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
+                            & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
                     { //todo * realizar a comparação pelo valor numerico
                         result = reg;
                         break;
@@ -96,6 +95,11 @@ public class BBTransactionHelper {
         //Irmã
         fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS",
                 null, "Fabiana(Instituto cancer Dr. Arnaldo"));
+
+        //Zé Antonio(BSB)
+        fakeList.add(new FakeRegister("1312", "X", "5248758", "x", "JOSE ANTONIO C", "1512", "1", "7107", "2", "DA TERRA SARNEY",
+                null, "c-cunhado(Igreja mundial poder de deus"));
+
     }
 
     public BBTransactionHelper(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
@@ -111,7 +115,8 @@ public class BBTransactionHelper {
         //transação interna c/c <-> poupança ou saque da conta
         if (chkNum.endsWith(sourceAccount) || (chkNum.endsWith(this.getFakeData().getCashOutAccount()))) {
             //todo: coleta de dados para operação interna
-            throw new OFXException("Operação não tratada ainda");
+            this.operationCode = 0;
+            //TODO: throw new OFXException("Operação não tratada ainda");
         } else {
             //movimentação de entrada/saida ocorrida
             switch (refNum.length()) {
@@ -120,10 +125,13 @@ public class BBTransactionHelper {
                     switch (this.operationCode) {
                         case 51:
                         case 52:
-                        case 60: {
-                            this.targetAccount = GlobalConfig.trimChar(chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH), '0');
-                            this.targetAccountDV = getModulo11(this.targetAccount);
-                            this.targetBranch = refNum.substring(2, 7).replace(".", "");  //pega 5 e exclui o ponto
+                        case 60: {  //Transferência online
+                            this.setTargetAccount(GlobalConfig.trimChar(chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH), '0'));
+                            this.setTargetAccountDV(getModulo11(this.getTargetAccount()));
+                            this.setTargetBranch(refNum.substring(2, 7).replace(".", ""));  //pega 5 e exclui o ponto
+                            break;
+                        }
+                        case 80: {  //pacote de serviços
                             break;
                         }
                         case 99: {  //pagamento de convenio(agua, luz, telefone, etc)
@@ -222,12 +230,6 @@ public class BBTransactionHelper {
     private String targetAccount;
     private int variantCode = 0;  //Valor padrão para transferencia entre contas
     private int operationCode = 60;  //Valor padrão para transferncia entre contas
-
-    public BBTransactionHelper(String targetBranch, String targetAccount, String targetAccountDV) {
-        this.targetAccount = targetAccount;
-        this.targetBranch = targetBranch;
-        this.targetAccountDV = targetAccountDV;
-    }
 
     public String getRefNum() {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
@@ -360,16 +362,45 @@ public class BBTransactionHelper {
     }
 
     public String getFakeCheckNum() throws OFXException {
-        if (this.targetBranch != null) {
-            String tempCode = String.format("%02d", this.operationCode); //nâo usado
-            String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-            String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-            String tempVariant = String.format("%02d", this.variantCode);
-            String result = tempBranch.substring(1) + tempVariant + tempAccount;
-            return result;
-        } else {
-            return null;
+        switch (this.operationCode) {
+            case 0:  //indeterminada
+            case 80: //Pacote de serviços
+            case 99: //pagto convênio(agua, luz, telefone)
+            {
+                return null;
+            }
+            default: {
+                if ((this.targetBranch != null) && (this.targetAccount != null)) {
+                    String result = null;
+                    if (this.getFakeData() != null) {
+                        String tempCode = String.format("%02d", this.operationCode); //nâo usado
+                        String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                        String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                        String tempVariant = String.format("%02d", this.variantCode);
+                        result = tempBranch.substring(1) + tempVariant + tempAccount;
+                    }
+                    return result;
+                } else {
+                    return null;
+                }
+            }
         }
+
+    }
+
+    /**
+     * @return the targetAccountDV
+     */
+    public String getTargetAccountDV() {
+        return targetAccountDV;
+    }
+
+    /**
+     * @param targetAccountDV the targetAccountDV to set
+     */
+    public void setTargetAccountDV(String targetAccountDV) {
+        this.fakeData = null;
+        this.targetAccountDV = targetAccountDV;
     }
 
 }
