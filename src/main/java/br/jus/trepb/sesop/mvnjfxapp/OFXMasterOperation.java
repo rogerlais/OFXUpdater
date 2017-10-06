@@ -152,6 +152,7 @@ public class OFXMasterOperation {
         this.slave = slave;
         this.checkIntegrity();
         BBTransactionHelper.loadFakeList(); //carga dos dados das contas e mapeamentos
+        BBTransactionHelper.loadMemoDictionary(); //carga dos termos a serem traduzidos nos memos(pouca importância)
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
@@ -282,22 +283,9 @@ public class OFXMasterOperation {
         } else {
             trans.setCheckNumber(bbTrans.getFakeCheckNum());
             trans.setReferenceNumber(bbTrans.getFakeRefNum());
-            trans.setMemo(bbTrans.getMemo(trans.getDatePosted(), trans.getReferenceNumber()));  //avaliar parametros corretos
+            trans.setMemo(bbTrans.getFakeMemo(trans.getDatePosted(), trans.getReferenceNumber()));  //avaliar parametros corretos
         }
-        trans.setMemo(this.finalFilterMemo(trans.getMemo()));  //filtro final para o memo
+        trans.setMemo(BBTransactionHelper.finalFilterMemo(trans.getMemo()));  //filtro final para o memo
     }
 
-    private String finalFilterMemo(String memo) {
-        //TODO: A exemplo das contas registrar lista com os filtros para os memos contendo chave e novo valor
-        if (memo.endsWith("TRIBUNAL REGIONAL ELEITORAL DA PARA")) {
-            return memo.replace("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO");
-        }
-        if (memo.contains("81997636329")) {
-            return memo.replace("81997636329", "(MISTER-M)");
-        }
-        if (memo.contains("83998638007")) {
-            return memo.replace("83998638007", "(DESCONHECIDO-MV)");
-        }
-        return memo;
-    }
 }

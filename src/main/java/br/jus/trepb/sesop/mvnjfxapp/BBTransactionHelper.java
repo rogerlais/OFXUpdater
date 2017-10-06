@@ -8,7 +8,9 @@ import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -54,7 +56,7 @@ public class BBTransactionHelper {
                     if ( // test all attrs
                             Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
                             & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
-                    { //todo * realizar a comparação pelo valor numerico
+                    {
                         result = reg;
                         break;
                     }
@@ -67,13 +69,27 @@ public class BBTransactionHelper {
         }
     }
 
-    static private List<FakeRegister> fakeList;
+    static private List<FakeRegister> fakeList = new ArrayList<FakeRegister>();
+
+    static private Map<String, String> memoDictionary = new HashMap<String, String>();
+
+    static public void loadMemoDictionary() {
+        //pagador da merreca
+        memoDictionary.put("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO");
+        //Apolo
+        memoDictionary.put("81997636329", "(MISTER-M)");
+        //Roger
+        memoDictionary.put("83996909016", "(CELUAR MANE)");
+        //Patroa
+        memoDictionary.put("83996880930", "(CELUAR PATROA)");
+        //Perguntar a patroa
+        memoDictionary.put("83998638007", "(DESCONHECIDO-MV)");
+
+    }
 
     static public void loadFakeList() {
-
-        fakeList = new ArrayList<FakeRegister>();
         //todo: Buscar ler dados de arquivo de configuração
-        //Fumo Junior
+        //Fumo (Neco Biu Junior)
         fakeList.add(
                 new FakeRegister(
                         GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
@@ -228,8 +244,8 @@ public class BBTransactionHelper {
 
     private String targetBranch;
     private String targetAccount;
-    private int variantCode = 0;  //Valor padrão para transferencia entre contas
-    private int operationCode = 60;  //Valor padrão para transferncia entre contas
+    private int variantCode;  //Valor padrão para transferencia entre contas
+    private int operationCode;  //Valor padrão para transferncia entre contas
 
     public String getRefNum() {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
@@ -261,7 +277,7 @@ public class BBTransactionHelper {
         return result;
     }
 
-    String getMemo(Date datePosted, String detail) throws OFXException {
+    String getFakeMemo(Date datePosted, String detail) throws OFXException {
         Calendar cal = Calendar.getInstance();
         cal.setTime(datePosted);
         String result = "";
@@ -404,6 +420,20 @@ public class BBTransactionHelper {
     public void setTargetAccountDV(String targetAccountDV) {
         this.fakeData = null;
         this.targetAccountDV = targetAccountDV;
+    }
+
+    public static String finalFilterMemo(String memo) {
+        //TODO: A exemplo das contas registrar lista com os filtros para os memos contendo chave e novo valor
+        //TODO: caso a ser resolvido  "Ordem Banc 12 Sec Tes Nac - 060177980001-60 TRIBUNAL REGIONAL ELEI"
+        String result = memo;
+        for (String key : memoDictionary.keySet()) {
+            if (memo.contains(key)) {
+                String value = memoDictionary.get(key);
+                result = memo.replace(key, value);
+                break;
+            }
+        }
+        return result;
     }
 
 }
