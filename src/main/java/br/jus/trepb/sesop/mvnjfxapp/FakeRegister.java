@@ -150,6 +150,22 @@ public class FakeRegister {
         this.comment = comment;
     }
 
+    /**
+     * FakeRegister mapping real data with fake data
+     *
+     * @param trueBranch
+     * @param trueBranchVD
+     * @param trueAccount
+     * @param trueAccountVD
+     * @param trueShortName
+     * @param fakeBranch
+     * @param fakeBranchVD
+     * @param fakeAccount
+     * @param fakeAccountVD
+     * @param fakeShortName
+     * @param cashOutAccount
+     * @param comment
+     */
     public FakeRegister( //constructor code-format
             String trueBranch, String trueBranchVD, String trueAccount, String trueAccountVD, String trueShortName,
             String fakeBranch, String fakeBranchVD, String fakeAccount, String fakeAccountVD, String fakeShortName,

@@ -68,8 +68,7 @@ public class OFXFileHelper {
     public Date getFirstTransactionTime() throws OFXException {
         Date result = new Date(Long.MAX_VALUE);
         List<Transaction> transList = getTransactionList();
-        for (Iterator itT = transList.iterator(); itT.hasNext();) {
-            Transaction transaction = (Transaction) itT.next();
+        for (Transaction transaction : transList) {
             if (transaction.getDatePosted().before(result)) {
                 result = transaction.getDatePosted();
             }
@@ -86,8 +85,7 @@ public class OFXFileHelper {
     public Date getLastTransactionTime() throws OFXException {
         Date result = new Date(Long.MIN_VALUE);
         List<Transaction> transList = this.getTransactionList();
-        for (Iterator itT = transList.iterator(); itT.hasNext();) {
-            Transaction transaction = (Transaction) itT.next();
+        for (Transaction transaction : transList) {
             if (transaction.getDatePosted().after(result)) {
                 result = transaction.getDatePosted();
             }
@@ -161,50 +159,21 @@ public class OFXFileHelper {
      */
     public void read() throws IOException, OFXParseException {
 
-        FileInputStream fis = new FileInputStream(this.getInputFile());
-        try {
-            Reader fr = new InputStreamReader(fis, "windows-1252"); //Requerido para interpertrar corretamente os dados
-            try {
-                AggregateUnmarshaller a = new AggregateUnmarshaller(ResponseEnvelope.class);  //Adapter para serialização
-                this.OFXContent = (ResponseEnvelope) a.unmarshal(fr);
-                /*
-                //como não existe esse get "BankStatementResponse bsr = re.getBankStatementResponse();"
-                //fiz esse codigo para capturar a lista de transações
-                MessageSetType type = MessageSetType.banking;
-                ResponseMessageSet message = this.OFXContent.getMessageSet(type);
-                if (message != null) {
-                List bank = ((BankingResponseMessageSet) message).getStatementResponses();
-                for (Iterator it = bank.iterator(); it.hasNext();) {
-                BankStatementResponseTransaction b = (BankStatementResponseTransaction) it.next();
-                System.out.println("cc: " + b.getMessage().getAccount().getAccountNumber());
-                System.out.println("ag: " + b.getMessage().getAccount().getBranchId());
-                System.out.println("balanço final: " + b.getMessage().getLedgerBalance().getAmount());
-                System.out.println("dataDoArquivo: " + b.getMessage().getLedgerBalance().getAsOfDate());
-                List list = b.getMessage().getTransactionList().getTransactions();
-                System.out.println("TRANSAÇÕES\n");
-                for (Iterator itT = list.iterator(); itT.hasNext();) {
-                Transaction transaction = (Transaction) itT.next();
-                System.out.println("tipo: " + transaction.getTransactionType().name());
-                System.out.println("id: " + transaction.getId());
-                System.out.println("data: " + transaction.getDatePosted());
-                System.out.println("valor: " + transaction.getAmount());
-                System.out.println("descricao: " + transaction.getMemo());
-                System.out.println("");
-                }
-                }
-                }
-                System.out.println("FIM DA EXIBIÇÃO!");
-                 */
-            } finally {
-                fr.close();
-            }
-        } finally {
-            fis.close();
+        try (
+                FileInputStream fis = new FileInputStream(this.getInputFile());
+                Reader fr = new InputStreamReader(fis, "windows-1252") //Requerido para interpertrar corretamente os dados
+                ) //allocation
+        {
+            AggregateUnmarshaller a = new AggregateUnmarshaller(ResponseEnvelope.class);  //Adapter para serialização
+            this.OFXContent = (ResponseEnvelope) a.unmarshal(fr);
         }
     }
 
     /**
      * SignonResponse after read the file
+     * @return
+     * @throws java.io.IOException
+     * @throws com.webcohesion.ofx4j.io.OFXParseException
      */
     protected SignonResponse getSignonResponse() throws IOException, OFXParseException {
         return this.getOFXContent().getSignonResponse();
@@ -288,6 +257,7 @@ public class OFXFileHelper {
      * source account(global config?)
      *
      * @param target
+     * @param sourceAccount
      * @return
      * @throws OFXException
      */

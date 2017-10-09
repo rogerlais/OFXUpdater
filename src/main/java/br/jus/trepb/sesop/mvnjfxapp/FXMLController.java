@@ -60,7 +60,7 @@ public class FXMLController implements Initializable {
         if (GlobalConfig.DEBUG) {
             this.lastUsedDir = Paths.get(System.getProperty("user.home"), "\\Google Drive\\10.Privado\\Financeiro\\2017\\01").toString();
         } else {
-            this.lastUsedDir = "c:\\";
+            this.lastUsedDir = System.getProperty("user.dir");
         }
     }
 
@@ -99,14 +99,15 @@ public class FXMLController implements Initializable {
             slaveOFX.read();
 
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
-            controller.saveUpdatedOFX();
+            controller.saveUpdatedOFX();  //altera os valores reais pelos fakes e salva com sufixo
+
+            //Exporta lista de transações pareadas
             controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
 
-            //Salva como outro ofx no mesmo caminho com sufixo alterado
-            BankAccountDetails account = masterOFX.getBankSetRerponseTransaction(0).getMessage().getAccount();
-            account.setAccountNumber("123456");
+            //Salva como csv
             masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
-            masterOFX.writeTo(masterOFX.getStdOutputFilename());
+
+            showAlert("Aviso:", "Operação finalizada com sucesso!");
 
         } catch (Exception exception) {
             showAlert("Alerta de erro", exception.getMessage());

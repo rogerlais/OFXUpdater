@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @author Rogerlais
  */
-public class OFXMasterOperation {
+public final class OFXMasterOperation {
 
     static public void displayContent(OFXFileHelper ofxH) throws IOException, OFXParseException {
 
@@ -205,9 +205,9 @@ public class OFXMasterOperation {
         }
 
         try {
-            Writer fw = new FileWriter(filename);
-            fw.write(result.toString());
-            fw.close();
+            try (Writer fw = new FileWriter(filename)) {
+                fw.write(result.toString());
+            }
         } catch (IOException iOException) {
             throw new OFXException("Erro salvando arquivo CSV com os batimentos das transações:\r\n" + iOException.getMessage());
         }
@@ -241,6 +241,8 @@ public class OFXMasterOperation {
 
     /**
      *
+     * @throws br.jus.trepb.sesop.mvnjfxapp.OFXException
+     * @throws java.io.IOException
      */
     public void saveUpdatedOFX() throws OFXException, IOException {
         //Dados da conta master

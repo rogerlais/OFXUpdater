@@ -11,7 +11,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
  */
 public class GlobalConfig {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     //Dados originais conta master
     public static final String OLD_MASTER_BRANCH = "3612";
@@ -24,6 +24,8 @@ public class GlobalConfig {
 
     public static final String MASTER_ACCOUNT_ALIAS = "CONTA AMOR";
 
+    public static final String MASTER_CASH_OUT_ACCOUNT = "9516565";
+
     //Dados originais conta slave
     public static final String OLD_SLAVE_BRANCH = "3501";
 
@@ -35,19 +37,21 @@ public class GlobalConfig {
 
     public static final String SLAVE_ACCOUNT_ALIAS = "CONTA PAIXAO";
 
-    //Dados para a conta simulada master
-    public static final String NEW_MASTER_BRANCH = "3371";
+    public static final String SLAVE_CASH_OUT_ACCOUNT = "7977137";
 
-    public static final String NEW_MASTER_BRANCH_DV = "5";
+    //Dados para a conta simulada master
+    public static final String NEW_MASTER_BRANCH = "123";
+
+    public static final String NEW_MASTER_BRANCH_DV = "6";
 
     public static final String NEW_MASTER_ACCOUNT = "495";
 
     public static final String NEW_MASTER_ACCOUNT_DV = "2";
 
     //Dados para a conta simulada slave
-    public static final String NEW_SLAVE_ACCOUNT = "6916";
+    public static final String NEW_SLAVE_ACCOUNT = "321";
 
-    public static final String NEW_SLAVE_ACCOUNT_DV = "7";
+    public static final String NEW_SLAVE_ACCOUNT_DV = "2";
 
     public static final String NEW_SLAVE_BRANCH = "6682";
 

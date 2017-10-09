@@ -26,11 +26,9 @@ public class BBDigitVerifier {
         String pesoHSBC = "8923456789";
 
         int cycleSum = 0;
-        int remainder = 0;
-        int calcDigit = 0;
-        int x = 0;
-
-        x = pesoBB.length() - branchId.length();
+        int remainder;
+        int calcDigit;
+        int x = pesoBB.length() - branchId.length();
         branchId = Strings.padStart(branchId, 8, '0');
 
         for (int i = 0; i < pesoBB.length(); i++) {
@@ -51,10 +49,8 @@ public class BBDigitVerifier {
 
         if (digToValidate == 0 && calcDigit == 10) {
             return true;
-        } else if (digToValidate != calcDigit) {
-            return false;
         } else {
-            return true;
+            return digToValidate == calcDigit;
         }
 
     }
@@ -85,11 +81,7 @@ public class BBDigitVerifier {
             calcDigit = 20;
         }
 
-        if (informedDigit != calcDigit) {
-            return false;
-        } else {
-            return true;
-        }
+        return (informedDigit == calcDigit);
     }
 
     static int getAccountVerifier(String branchId) {
@@ -191,7 +183,7 @@ public class BBDigitVerifier {
         if (add <= 0) {
             return s;
         }
-        StringBuffer str = new StringBuffer(s);
+        StringBuilder str = new StringBuilder(s);
         char[] ch = new char[add];
         Arrays.fill(ch, c);
         str.append(ch);
@@ -215,7 +207,7 @@ public class BBDigitVerifier {
         if (add <= 0) {
             return s;
         }
-        StringBuffer str = new StringBuffer(s);
+        StringBuilder str = new StringBuilder(s);
         char[] ch = new char[add];
         Arrays.fill(ch, c);
         str.insert(0, ch);

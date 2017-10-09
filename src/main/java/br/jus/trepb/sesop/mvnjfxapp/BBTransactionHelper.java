@@ -105,7 +105,6 @@ public class BBTransactionHelper {
         memoDictionary.put("Ordem Banc 12 Sec Tes Nac", "Ajuda de custo");
         memoDictionary.put("060177980001-60", "(CNPJ-Senzala)");
         memoDictionary.put("TRIBUNAL REGIONAL ELEI", "(Senzala)"); //[2] - Sempre depois de (1)
-
     }
 
     static public void loadFakeList() {
@@ -117,7 +116,7 @@ public class BBTransactionHelper {
                         GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
                         GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
                         GlobalConfig.NEW_MASTER_BRANCH_DV, GlobalConfig.NEW_MASTER_ACCOUNT, GlobalConfig.NEW_MASTER_ACCOUNT_DV,
-                        GlobalConfig.MASTER_ACCOUNT_ALIAS, "9516565", "master")
+                        GlobalConfig.MASTER_ACCOUNT_ALIAS, GlobalConfig.MASTER_CASH_OUT_ACCOUNT, "master")
         );
         //MV
         fakeList.add(
@@ -125,7 +124,7 @@ public class BBTransactionHelper {
                         GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
                         GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
                         GlobalConfig.NEW_SLAVE_BRANCH_DV, GlobalConfig.NEW_SLAVE_ACCOUNT, GlobalConfig.NEW_SLAVE_ACCOUNT_DV,
-                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, "7977137", "slave")
+                        GlobalConfig.SLAVE_ACCOUNT_ALIAS, GlobalConfig.SLAVE_CASH_OUT_ACCOUNT, "slave")
         );
         //Pai
         fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO",
@@ -141,7 +140,6 @@ public class BBTransactionHelper {
         //Irmã Márcia(BSB)
         fakeList.add(new FakeRegister("3380", "X", "20245", "2", "MARCIA VIEIRA", "1614", "4", "170000", "6", "PARAIBA MASCULINA",
                 null, "CUNHADA(lagoinha.com/dizimos)"));
-
     }
 
     public BBTransactionHelper(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
@@ -407,22 +405,6 @@ public class BBTransactionHelper {
         } else {
             return null;
         }
-        /*
-        switch (this.targetBranch) {
-            case GlobalConfig.OLD_MASTER_BRANCH: {
-                return GlobalConfig.NEW_MASTER_BRANCH;
-            }
-            case GlobalConfig.OLD_SLAVE_BRANCH: {
-                return GlobalConfig.NEW_SLAVE_BRANCH;
-            }
-            case "1138": {  //Pai e Fabiana
-                return "1138";
-            }
-            default: {
-                return this.targetBranch;
-            }
-        }
-         */
     }
 
     public String getFakeRefNum() throws OFXException {
@@ -530,8 +512,16 @@ public class BBTransactionHelper {
         return this.preloadCellInfo;
     }
 
+    /**
+     * Search through an object array for a specific element. The conditions to match are the same instance or same value( by
+     * "equals" evaluation)
+     *
+     * @param <T>
+     * @param array
+     * @param v
+     * @return
+     */
     public static <T> boolean contains(final T[] array, final T v) {
-        //public static <T> boolean contains(final T[] array, final T v) *** para esta assinatura ocorre erro de compilação para tipos nativos
         //TODO: Levar para biblioteca
         if (v == null) {
             for (final T e : array) {
