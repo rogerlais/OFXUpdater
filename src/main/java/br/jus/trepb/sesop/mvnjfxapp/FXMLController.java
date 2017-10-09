@@ -1,9 +1,7 @@
 package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
-import com.webcohesion.ofx4j.io.OFXParseException;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
@@ -116,7 +114,7 @@ public class FXMLController implements Initializable {
 
     }
 
-    private void showAlert(String title, String message) {
+    static public void showAlert(String title, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText("Information Alert");

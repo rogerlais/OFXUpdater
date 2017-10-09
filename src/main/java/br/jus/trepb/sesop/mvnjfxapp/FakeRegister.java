@@ -39,13 +39,6 @@ public class FakeRegister {
     }
 
     /**
-     * @return the trueBranchVD
-     */
-    public String getTrueBranchVD() {
-        return trueBranchVD;
-    }
-
-    /**
      * @param trueBranchVD the trueBranchVD to set
      */
     public void setTrueBranchVD(String trueBranchVD) {
@@ -64,13 +57,6 @@ public class FakeRegister {
      */
     public void setTrueAccount(String trueAccount) {
         this.trueAccount = trueAccount;
-    }
-
-    /**
-     * @return the trueAccountVD
-     */
-    public String getTrueAccountVD() {
-        return trueAccountVD;
     }
 
     /**
@@ -144,24 +130,10 @@ public class FakeRegister {
     }
 
     /**
-     * @param fakeAccountVD the fakeAccountVD to set
-     */
-    public void setFakeAccountVD(String fakeAccountVD) {
-        this.fakeAccountVD = fakeAccountVD;
-    }
-
-    /**
      * @return the fakeShortName
      */
     public String getFakeShortName() {
         return fakeShortName;
-    }
-
-    /**
-     * @param fakeShortName the fakeShortName to set
-     */
-    public void setFakeShortName(String fakeShortName) {
-        this.fakeShortName = fakeShortName;
     }
 
     /**
@@ -203,12 +175,4 @@ public class FakeRegister {
     public String getCashOutAccount() {
         return cashOutAccount;
     }
-
-    /**
-     * @param cashOutAccount the cashOutAccount to set
-     */
-    public void setCashOutAccount(String cashOutAccount) {
-        this.cashOutAccount = cashOutAccount;
-    }
-
 }

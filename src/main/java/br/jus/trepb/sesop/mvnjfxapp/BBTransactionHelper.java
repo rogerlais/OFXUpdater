@@ -7,7 +7,6 @@ import com.google.common.base.Strings;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +44,7 @@ public class BBTransactionHelper {
     }
 
     private FakeRegister fakeData;
+    private final Transaction originalTransaction;
 
     protected FakeRegister getFakeData() throws OFXException {
         if (this.fakeData != null) {
@@ -73,21 +73,43 @@ public class BBTransactionHelper {
 
     static private Map<String, String> memoDictionary = new HashMap<String, String>();
 
+    static private List<PreLoadCellInfo> preLoadCellPhonesNumbers = new ArrayList<PreLoadCellInfo>();
+
+    static public void loadPreLoadedCellPhones() {
+        preLoadCellPhonesNumbers.clear();
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "996909016", "999999901", "Roger-TIM-PB", "ARUAH-TIM-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "996880930", "999999902", "MV-TIM-PB", "PATROA-TIM-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988035232", "999999903", "MV-OI-PB(das antigas)", "MV(ANTIGO)-OI-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "997636329", "999999904", "Apolo-TIM-PE", "MISTER-M-TIM-PE"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "998638007", "999999905", "Lucas-TIM-PB", "FERIAS-TIM-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988806954", "999999906", "MV-OI-PB(desativado)", "PATROA(DESATIVADO)-OI-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996089270", "999999907", "Radler-TIM-PE", "MACGYVER-TIM-PE"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "999273714", "999999908", "Millenna-TIM-PB", "CABECUDA-TIM-PB"));
+    }
+
     static public void loadMemoDictionary() {
+        memoDictionary.clear();
         //pagador da merreca
-        memoDictionary.put("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO");
+        memoDictionary.put("SOP-TRE", "SOP-SENZALA");
+        memoDictionary.put("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO"); //[1] - Sempre antes de (2)
+        memoDictionary.put("Recebimento de Proventos", "Recebimento de Merreca");
         //Apolo
         memoDictionary.put("81997636329", "(MISTER-M)");
         //Roger
-        memoDictionary.put("83996909016", "(CELUAR MANE)");
+        memoDictionary.put("83996909016", "(CELULAR MANE)");
         //Patroa
-        memoDictionary.put("83996880930", "(CELUAR PATROA)");
+        memoDictionary.put("83996880930", "(CELULAR PATROA)");
         //Perguntar a patroa
-        memoDictionary.put("83998638007", "(DESCONHECIDO-MV)");
+        memoDictionary.put("83998638007", "(ETERNAS.FERIAS)");
+        //ordem bancária(diárias e afins)
+        memoDictionary.put("Ordem Banc 12 Sec Tes Nac", "Ajuda de custo");
+        memoDictionary.put("060177980001-60", "(CNPJ-Senzala)");
+        memoDictionary.put("TRIBUNAL REGIONAL ELEI", "(Senzala)"); //[2] - Sempre depois de (1)
 
     }
 
     static public void loadFakeList() {
+        fakeList.clear();
         //todo: Buscar ler dados de arquivo de configuração
         //Fumo (Neco Biu Junior)
         fakeList.add(
@@ -113,8 +135,12 @@ public class BBTransactionHelper {
                 null, "Fabiana(Instituto cancer Dr. Arnaldo"));
 
         //Zé Antonio(BSB)
-        fakeList.add(new FakeRegister("1312", "X", "5248758", "x", "JOSE ANTONIO C", "1512", "1", "7107", "2", "DA TERRA SARNEY",
-                null, "c-cunhado(Igreja mundial poder de deus"));
+        fakeList.add(new FakeRegister("1312", "X", "5248758", "x", "JOSE ANTONIO C", "1512", "1", "7107", "2", "FUGIU DE SARNEY",
+                null, "co-cunhado(Igreja mundial poder de deus"));
+
+        //Irmã Márcia(BSB)
+        fakeList.add(new FakeRegister("3380", "X", "20245", "2", "MARCIA VIEIRA", "1614", "4", "170000", "6", "PARAIBA MASCULINA",
+                null, "CUNHADA(lagoinha.com/dizimos)"));
 
     }
 
@@ -127,16 +153,24 @@ public class BBTransactionHelper {
 
         this.targetAccount = GlobalConfig.trimChar(sourceAccount, '0');
         this.targetBranch = GlobalConfig.trimChar(sourceBranch, '0');
+        this.originalTransaction = trans;  //usada para remontar carga de celular pré-pago
+        this.preloadCellInfo = this.findCellInfo(chkNum, refNum);
 
         //transação interna c/c <-> poupança ou saque da conta
-        if (chkNum.endsWith(sourceAccount) || (chkNum.endsWith(this.getFakeData().getCashOutAccount()))) {
+        if ((this.preloadCellInfo != null) //recarga de celular
+                || //ou
+                chkNum.endsWith(sourceAccount) //age sobre própria conta
+                || //Movimentação interna vinculada a mesma conta
+                (chkNum.endsWith(this.getFakeData().getCashOutAccount())) //Existe referência ao caso acima
+                ) {
             //todo: coleta de dados para operação interna
             this.operationCode = 0;
             //TODO: throw new OFXException("Operação não tratada ainda");
         } else {
             //movimentação de entrada/saida ocorrida
             switch (refNum.length()) {
-                case GlobalConfig.REFNUM_TRANSFER_LENGTH: {  //operação de transferencia
+                case GlobalConfig.REFNUM_TRANSFER_LENGTH: {  //operação de transferencia = recarga de pré-pago
+                    //TODO: Tratar recarga de pré-pago
                     this.operationCode = Integer.parseInt(refNum.substring(0, 2));
                     switch (this.operationCode) {
                         case 51:
@@ -147,7 +181,13 @@ public class BBTransactionHelper {
                             this.setTargetBranch(refNum.substring(2, 7).replace(".", ""));  //pega 5 e exclui o ponto
                             break;
                         }
-                        case 80: {  //pacote de serviços
+                        case 80:
+                        case 88:
+                        case 89: {  //pacote de serviços(demais dados não mapeaados e sempre se alteram)
+                            this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
+                            if (this.variantCode != 0) {
+                                throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
+                            }
                             break;
                         }
                         case 99: {  //pagamento de convenio(agua, luz, telefone, etc)
@@ -165,6 +205,7 @@ public class BBTransactionHelper {
                                     chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
                                 break;
                             } else {
+                                //-(201612 recarga oi 988803523 MV)
                                 throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
                             }
                         }
@@ -246,6 +287,7 @@ public class BBTransactionHelper {
     private String targetAccount;
     private int variantCode;  //Valor padrão para transferencia entre contas
     private int operationCode;  //Valor padrão para transferncia entre contas
+    private PreLoadCellInfo preloadCellInfo;
 
     public String getRefNum() {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
@@ -277,40 +319,57 @@ public class BBTransactionHelper {
         return result;
     }
 
-    String getFakeMemo(Date datePosted, String detail) throws OFXException {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(datePosted);
-        String result = "";
-        String prefix;
-        switch (this.operationCode) {
-            case 60: {
-                //"Transferência on line - 07/01 3501      21038-2 MERCIA VIEIRA"
-                //"Transferência on line - 10/01 1138       2560-7 MANOEL S DA SI"
-                //"Transferência on line - 07/01 3612      55898-2 ROGERLAIS ANDR"
-                //"Transferência on line - 15/01 1312    5248758-X JOSE ANTONIO C"
-                //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
-                prefix = "Transferência on line - ";
-                break;
+    String getFakeMemo() throws OFXException {
+
+        String result = null;
+        PreLoadCellInfo cellInfo = this.getPreLoadCellInfo();
+        if (cellInfo == null) {
+            if (this.getFakeData() == null) {  //Sem registro de mapeamento(isso pode ser perigoso)
+                result = this.originalTransaction.getMemo();
+                FXMLController.showAlert("Aviso:", "Encontrada operação não mapeada:\n\r" + result);
+            } else {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(this.originalTransaction.getDatePosted());
+                String prefix;
+                switch (this.operationCode) {
+                    case 60: {
+                        prefix = "Transferência on line - ";
+                        break;
+                    }
+                    case 51: {
+                        //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
+                        prefix = "Transferido da poupança - ";
+                        break;
+                    }
+                    default: {
+                        prefix = null;
+                    }
+                }
+                if (prefix == null) {
+                    if (this.operationCode == 0) { //Operação não tratada/mapeada
+                        result = this.originalTransaction.getMemo();
+                    } else {
+                        Integer[] BANK_OPERATION_CODES = new Integer[]{new Integer(80), new Integer(88), new Integer(89)}; //Lista de operações bancarias ou saques
+                        if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (this.variantCode == 0)) {
+                            result = this.originalTransaction.getMemo();
+                        } else {
+                            throw new UnsupportedOperationException(
+                                    String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
+                                            this.operationCode));
+                        }
+                    }
+                } else {
+                    String dateStr = String.format("%1$02d/%2$02d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1);
+                    prefix += dateStr;
+                    result = prefix + " " + Strings.padEnd(this.getFakeTargetBranch(), 4, ' ') + Strings.padStart(this.getFakeTargetAccount(), 11, ' ') + '-'
+                            + this.getFakeTargetAccountDV() + " " + this.getFakeShortName(); //?? como pegar o complemento
+                }
             }
-            case 51: {
-                //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
-                prefix = "Transferido da poupança - ";
-                break;
-            }
-            default: {
-                prefix = null;
-            }
+        } else {
+            result = "Telefone Pre-Pago - " + Integer.toString(cellInfo.getDDD()) + cellInfo.getFakeCellNumber() + " " + cellInfo.getFakeDescription();
         }
-        if (prefix == null) {
-            throw new UnsupportedOperationException(
-                    String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
-                            this.operationCode));
-        }
-        String dateStr = String.format("%1$02d/%2$02d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1);
-        prefix += dateStr;
-        result = prefix + " " + Strings.padEnd(this.getFakeTargetBranch(), 4, ' ') + Strings.padStart(this.getFakeTargetAccount(), 11, ' ') + '-'
-                + this.getFakeTargetAccountDV() + " " + this.getFakeShortName(); //?? como pegar o complemento
-        return result.trim();
+        result = BBTransactionHelper.finalFilterMemo(result.trim());
+        return result;
     }
 
     public String getFakeTargetAccount() throws OFXException {
@@ -369,42 +428,59 @@ public class BBTransactionHelper {
     public String getFakeRefNum() throws OFXException {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
         String result = null;
-        if (this.getFakeData() != null) {
-            String tempCode = String.format("%02d", this.operationCode);
-            String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-            String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-            String tempVariant = String.format("%02d", this.variantCode);
-            result = tempCode + tempBranch + tempVariant + tempAccount;
+        if (this.preloadCellInfo == null) {
+            if (this.getFakeData() != null) {
+                String tempCode = String.format("%02d", this.operationCode);
+                String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                String tempVariant = String.format("%02d", this.variantCode);
+                result = tempCode + tempBranch + tempVariant + tempAccount;
+                result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
+            }
+        } else {
+            //numero do celular + 6 digitos finais do numero do cheknum
+            result = this.preloadCellInfo.getFakeCellNumber() + this.originalTransaction.getCheckNumber().substring(6);
             result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
         }
         return result;
     }
 
     public String getFakeCheckNum() throws OFXException {
-        switch (this.operationCode) {
-            case 0:  //indeterminada
-            case 80: //Pacote de serviços
-            case 99: //pagto convênio(agua, luz, telefone)
-            {
-                return null;
-            }
-            default: {
-                if ((this.targetBranch != null) && (this.targetAccount != null)) {
-                    String result = null;
-                    if (this.getFakeData() != null) {
-                        String tempCode = String.format("%02d", this.operationCode); //nâo usado
-                        String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-                        String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-                        String tempVariant = String.format("%02d", this.variantCode);
-                        result = tempBranch.substring(1) + tempVariant + tempAccount;
-                    }
-                    return result;
-                } else {
+        String result = null;
+        if (this.preloadCellInfo == null) {
+            switch (this.operationCode) {
+                case 0:  //indeterminada
+                case 80: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                case 88: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                case 89: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                case 99: //pagto convênio(agua, luz, telefone)
+                {
                     return null;
                 }
+                default: {
+                    if ((this.targetBranch != null) && (this.targetAccount != null)) {
+                        if (this.getFakeData() != null) {
+                            String tempCode = String.format("%02d", this.operationCode); //nâo usado
+                            String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                            String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                            String tempVariant = String.format("%02d", this.variantCode);
+                            result = tempBranch.substring(1) + tempVariant + tempAccount;
+                        }
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        } else {  //composição para recarga de celular
+            //6 finais da transação original mais os 6 últimos do celular
+            String oldCheckNum = this.originalTransaction.getCheckNumber();
+            if (oldCheckNum.length() > 11) {
+                result = this.preloadCellInfo.getFakeCellNumber().substring(3, 9) + oldCheckNum.substring(6, 12);
+            } else {
+                throw new OFXException("CheckNum original incompatível com operação de recarga de celular.");
             }
         }
-
+        return result;
     }
 
     /**
@@ -423,17 +499,54 @@ public class BBTransactionHelper {
     }
 
     public static String finalFilterMemo(String memo) {
-        //TODO: A exemplo das contas registrar lista com os filtros para os memos contendo chave e novo valor
         //TODO: caso a ser resolvido  "Ordem Banc 12 Sec Tes Nac - 060177980001-60 TRIBUNAL REGIONAL ELEI"
+        //infelizmente para contemplar casos como acima temos de varrer toda a lista sempre
         String result = memo;
         for (String key : memoDictionary.keySet()) {
-            if (memo.contains(key)) {
+            if (result.contains(key)) {
                 String value = memoDictionary.get(key);
-                result = memo.replace(key, value);
-                break;
+                result = result.replace(key, value);
             }
         }
         return result;
+    }
+
+    private PreLoadCellInfo findCellInfo(String chkNum, String refNum) {
+        PreLoadCellInfo result = null;
+        String lookupPhone = refNum.replace(".", "");  //remove os pontos
+        if (lookupPhone.length() >= 9) {
+            lookupPhone = lookupPhone.substring(0, 9);  //assume-se sempre 9 digitos a partir de agora
+            for (PreLoadCellInfo cellPhone : preLoadCellPhonesNumbers) {
+                if (cellPhone.getCellNumber().equals(lookupPhone)) {
+                    result = cellPhone;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    public PreLoadCellInfo getPreLoadCellInfo() {
+        return this.preloadCellInfo;
+    }
+
+    public static <T> boolean contains(final T[] array, final T v) {
+        //public static <T> boolean contains(final T[] array, final T v) *** para esta assinatura ocorre erro de compilação para tipos nativos
+        //TODO: Levar para biblioteca
+        if (v == null) {
+            for (final T e : array) {
+                if (e == null) {
+                    return true;
+                }
+            }
+        } else {
+            for (final T e : array) {
+                if (e == v || v.equals(e)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

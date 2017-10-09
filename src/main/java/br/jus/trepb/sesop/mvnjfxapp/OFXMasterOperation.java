@@ -153,6 +153,7 @@ public class OFXMasterOperation {
         this.checkIntegrity();
         BBTransactionHelper.loadFakeList(); //carga dos dados das contas e mapeamentos
         BBTransactionHelper.loadMemoDictionary(); //carga dos termos a serem traduzidos nos memos(pouca importância)
+        BBTransactionHelper.loadPreLoadedCellPhones();
     }
 
     protected void checkIntegrity() throws OFXParseException, Exception {
@@ -272,7 +273,8 @@ public class OFXMasterOperation {
     private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
 
         BBTransactionHelper bbTrans = new BBTransactionHelper(trans, sourceBranch, sourceAccount);
-        if (bbTrans.getFakeCheckNum() == null) {  //Nada a alterar passa liso
+        String fakeCheckNum = bbTrans.getFakeCheckNum();
+        if ((fakeCheckNum == null) && (bbTrans.getPreLoadCellInfo() == null)) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
                     trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
                     | //or
@@ -281,11 +283,10 @@ public class OFXMasterOperation {
                 throw new OFXException("Transação não capturada pelo mapeamento");
             }
         } else {
-            trans.setCheckNumber(bbTrans.getFakeCheckNum());
+            trans.setCheckNumber(fakeCheckNum);
             trans.setReferenceNumber(bbTrans.getFakeRefNum());
-            trans.setMemo(bbTrans.getFakeMemo(trans.getDatePosted(), trans.getReferenceNumber()));  //avaliar parametros corretos
         }
-        trans.setMemo(BBTransactionHelper.finalFilterMemo(trans.getMemo()));  //filtro final para o memo
+        trans.setMemo(bbTrans.getFakeMemo());  //sempre pode filtrar algo
     }
 
 }
