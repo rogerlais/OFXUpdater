@@ -330,6 +330,7 @@ public class BBTransactionHelper {
                 cal.setTime(this.originalTransaction.getDatePosted());
                 String prefix;
                 switch (this.operationCode) {
+                    case 52:
                     case 60: {
                         prefix = "Transferência on line - ";
                         break;
