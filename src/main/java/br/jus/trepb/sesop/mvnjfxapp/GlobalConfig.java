@@ -11,7 +11,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
  */
 public class GlobalConfig {
 
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     //Dados originais conta master
     public static final String OLD_MASTER_BRANCH = "3612";
@@ -60,6 +60,7 @@ public class GlobalConfig {
     public static final int ACCOUNT_BB_LENGTH = 7;  //tamanho da conta do BB
 
     public static final int REFNUM_TRANSFER_LENGTH = 19;
+    public static final int REFNUM_TRANSFER_SAVINGS = 17;
 
     public static String trimChar(String str, char c) {
         //TODO: Levar para biblioteca

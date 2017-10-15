@@ -258,15 +258,28 @@ public final class OFXMasterOperation {
 
         //Enumera e trata todas as transações da conta master
         List<Transaction> mTL = this.master.getTransactionList();
-        for (Transaction masterTransaction : mTL) {
-            this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
+        int t = 0;
+        try {
+            for (Transaction masterTransaction : mTL) {
+                t++;
+                this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
+            }
+        } catch (Exception e) {
+            throw new OFXException(String.format("T=%d - %s", t, e.getMessage()));
         }
 
         //Varre as transações do slave, exceto as já atualizadas
         List<Transaction> sTL = this.slave.getTransactionList();
-        for (Transaction slaveTrans : sTL) {
-            this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
+        t = 0;
+        try {
+            for (Transaction slaveTrans : sTL) {
+                t++;
+                this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
+            }
+        } catch (Exception e) {
+            throw new OFXException(String.format("T=%d - %s", t, e.getMessage()));
         }
+
         //Salva os novos arquivos com as alterações
         this.master.writeTo(this.master.getStdOutputFilename());
         this.slave.writeTo(this.slave.getStdOutputFilename());
@@ -275,8 +288,9 @@ public final class OFXMasterOperation {
     private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
 
         BBTransactionHelper bbTrans = new BBTransactionHelper(trans, sourceBranch, sourceAccount);
-        String fakeCheckNum = bbTrans.getFakeCheckNum();
-        if ((fakeCheckNum == null) && (bbTrans.getPreLoadCellInfo() == null)) {  //Nada a alterar passa liso
+        String newCheckNum = bbTrans.getFakeCheckNum();
+        String newMemo = null;
+        if ((newCheckNum == null) && (bbTrans.getPreLoadCellInfo() == null)) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
                     trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
                     | //or
@@ -285,10 +299,16 @@ public final class OFXMasterOperation {
                 throw new OFXException("Transação não capturada pelo mapeamento");
             }
         } else {
-            trans.setCheckNumber(fakeCheckNum);
-            trans.setReferenceNumber(bbTrans.getFakeRefNum());
+            newMemo = bbTrans.getFakeMemo();
+            String newReferenceNumber = bbTrans.getFakeRefNum();
+            trans.setCheckNumber(newCheckNum);
+            trans.setReferenceNumber(newReferenceNumber);
         }
-        trans.setMemo(bbTrans.getFakeMemo());  //sempre pode filtrar algo
+        if (newMemo == null) {
+            trans.setMemo(bbTrans.getFakeMemo());
+        } else {
+            trans.setMemo(newMemo);  //sempre pode filtrar algo
+        }
     }
 
 }

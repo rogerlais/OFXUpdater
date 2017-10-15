@@ -1,6 +1,5 @@
 package br.jus.trepb.sesop.mvnjfxapp;
 
-import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -58,7 +57,7 @@ public class FXMLController implements Initializable {
         this.btnExec.setMnemonicParsing(true);
         this.btnCancel.setMnemonicParsing(true);
         if (GlobalConfig.DEBUG) {
-            this.lastUsedDir = Paths.get(System.getProperty("user.home"), "\\Google Drive\\10.Privado\\Financeiro\\2017\\01").toString();
+            this.lastUsedDir = Paths.get(System.getProperty("user.home"), "\\Google Drive\\10.Privado\\Financeiro\\_swap").toString();
         } else {
             this.lastUsedDir = System.getProperty("user.dir");
         }
