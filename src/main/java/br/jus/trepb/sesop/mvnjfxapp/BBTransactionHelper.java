@@ -237,6 +237,7 @@ public class BBTransactionHelper {
             case GlobalConfig.REFNUM_TRANSFER_LENGTH: {  //operação de transferencia = recarga de pré-pago
                 this.operationCode = Integer.parseInt(refNum.substring(0, 2));
                 switch (this.operationCode) {
+                    case 22:  //transferência online recebimento/crédito(mais uma)
                     case 51:
                     case 52:  //transferência online entre contas
                     case 60: {  //Transferência online
@@ -420,6 +421,7 @@ public class BBTransactionHelper {
                     }
                 } else {
                     switch (this.operationCode) {
+                        case 22:
                         case 52:
                         case 60: { //Depósito poupança pela C/C
                             if (this.isInternalTransaction) {
