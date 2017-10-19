@@ -21,13 +21,18 @@ public class FXMLController implements Initializable {
     @FXML
     private TextField edtSlaveOFX;
     @FXML
+    private TextField edtCreditCardOFX;
+    @FXML
     private Button edtMasterOFXLkp;
+    @FXML
+    private Button edtCreditCardOFXLkp;
     @FXML
     private Button edtSlaveOFXLkp;
     @FXML
     private Button btnExec;
     @FXML
     private Button btnCancel;
+    @FXML
     private String lastUsedDir;
 
     @FXML
@@ -45,9 +50,13 @@ public class FXMLController implements Initializable {
             System.out.println("Buscando por arquivo MASTER!");
             this.edtMasterOFX.setText(this.choiceFilename());
         } else {
-            //Buscar por valor para OFX Slave
-            System.out.println("Buscando por arquivo SLAVE!");
-            this.edtSlaveOFX.setText(this.choiceFilename());
+            if (btn.getId().equals(this.edtCreditCardOFXLkp.getId())) { //buscar por arquivo com informações de cartão de crédito
+                System.out.println("Buscando por arquivo SLAVE!");
+                this.edtCreditCardOFX.setText(this.choiceFilename());
+            } else { //Buscar por valor para OFX Slave
+                System.out.println("Buscando por arquivo SLAVE!");
+                this.edtSlaveOFX.setText(this.choiceFilename());
+            }
         }
     }
 
@@ -73,7 +82,7 @@ public class FXMLController implements Initializable {
             this.lastUsedDir = selectedFile.getParent();
             return selectedFile.getAbsolutePath();
         } else {
-            return null;
+            return ""; //null pode dar problemas posteriores
         }
 
     }
@@ -86,30 +95,39 @@ public class FXMLController implements Initializable {
 
         try {
             //Cria arquivo para o apontado como master
-            File masterOFXFile = new File(this.edtMasterOFX.getText());
-            //Instancia o OFX master
-            OFXFileHelper masterOFX = new OFXFileHelper(masterOFXFile);
-            masterOFX.read();
+            OFXFileHelper masterOFX = null;
+            String filename = this.edtMasterOFX.getText();
+            if (!filename.isEmpty()) {
+                File masterOFXFile = new File(filename);
+                //Instancia o OFX master
+                masterOFX = new OFXFileHelper(masterOFXFile);
+                masterOFX.read();
+            }
 
             //Cria arquivo slave
-            File slaveOFXFile = new File(this.edtSlaveOFX.getText());
-            //Instancia o OFX master
-            OFXFileHelper slaveOFX = new OFXFileHelper(slaveOFXFile);
-            slaveOFX.read();
+            OFXFileHelper slaveOFX = null;
+            filename = this.edtSlaveOFX.getText();
+            if (!filename.isEmpty()) {
+                File slaveOFXFile = new File(filename);
+                //Instancia o OFX master
+                slaveOFX = new OFXFileHelper(slaveOFXFile);
+                slaveOFX.read();
+            } else {
+            }
 
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
             controller.saveUpdatedOFX();  //altera os valores reais pelos fakes e salva com sufixo
 
             //Exporta lista de transações pareadas
-            controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
+            //controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
 
             //Salva como csv
-            masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
+            //masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
 
             showAlert("Aviso:", "Operação finalizada com sucesso!");
 
         } catch (Exception exception) {
-            showAlert("Alerta de erro", exception.getMessage());
+            showAlert("Alerta de erro", exception.getLocalizedMessage());
         }
 
     }

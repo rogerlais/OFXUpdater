@@ -128,6 +128,10 @@ public final class OFXMasterOperation {
      */
     private void checkWindowTime() throws IOException, OFXParseException, Exception {
 
+        if ((this.master == null) || (this.slave == null)) {  //Não há como comparar janelas temporais
+            return;
+        }
+
         ZoneId zid = ZoneId.systemDefault();
 
         LocalDateTime masterStartDate = LocalDateTime.ofInstant(master.getFirstTransactionTime().toInstant(), zid);
@@ -214,29 +218,31 @@ public final class OFXMasterOperation {
     }
 
     private void checkOwners() throws OFXException {
-        //TODO roger para master e MV para slave, numero de agencia e conta correspondentes
         //Dados da conta master
-        String masterFullAgency = GlobalConfig.OLD_MASTER_BRANCH + "-" + GlobalConfig.OLD_MASTER_BRANCH_DV;
-        String masterFullAccount = GlobalConfig.OLD_MASTER_ACCOUNT + "-" + GlobalConfig.OLD_MASTER_ACCOUNT_DV;
-        if ( //teste de origem
-                (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
-                | //or
-                (!this.master.getAccount().getAccountNumber().equals(masterFullAccount)) //conta
-                ) {
-            throw new OFXException("Dados para arquivo master inconsistentes");
+        if (this.master != null) {
+            String masterFullAgency = GlobalConfig.OLD_MASTER_BRANCH + "-" + GlobalConfig.OLD_MASTER_BRANCH_DV;
+            String masterFullAccount = GlobalConfig.OLD_MASTER_ACCOUNT + "-" + GlobalConfig.OLD_MASTER_ACCOUNT_DV;
+            if ( //teste de origem
+                    (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
+                    | //or
+                    (!this.master.getAccount().getAccountNumber().equals(masterFullAccount)) //conta
+                    ) {
+                throw new OFXException("Dados para arquivo master inconsistentes");
+            }
         }
 
         //Dados da conta slave
-        String slaveFullAgency = GlobalConfig.OLD_SLAVE_BRANCH + "-" + GlobalConfig.OLD_SLAVE_BRANCH_DV;
-        String slaveFullAccount = GlobalConfig.OLD_SLAVE_ACCOUNT + "-" + GlobalConfig.OLD_SLAVE_ACCOUNT_DV;
-        if ( //teste de origem
-                (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
-                | //or
-                (!this.slave.getAccount().getAccountNumber().equals(slaveFullAccount)) //conta
-                ) {
-            throw new OFXException("Dados para arquivo slave inconsistentes");
+        if (this.slave != null) {
+            String slaveFullAgency = GlobalConfig.OLD_SLAVE_BRANCH + "-" + GlobalConfig.OLD_SLAVE_BRANCH_DV;
+            String slaveFullAccount = GlobalConfig.OLD_SLAVE_ACCOUNT + "-" + GlobalConfig.OLD_SLAVE_ACCOUNT_DV;
+            if ( //teste de origem
+                    (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
+                    | //or
+                    (!this.slave.getAccount().getAccountNumber().equals(slaveFullAccount)) //conta
+                    ) {
+                throw new OFXException("Dados para arquivo slave inconsistentes");
+            }
         }
-
     }
 
     /**
@@ -245,44 +251,46 @@ public final class OFXMasterOperation {
      * @throws java.io.IOException
      */
     public void saveUpdatedOFX() throws OFXException, IOException {
+        int transCount;
         //Dados da conta master
-        BankAccountDetails masterAccount = this.master.getAccount();
-        //Altera para os novos valores
-        masterAccount.setBranchId(GlobalConfig.NEW_MASTER_BRANCH + "-" + GlobalConfig.NEW_MASTER_BRANCH_DV);
-        masterAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
+        if (this.master != null) {
+            BankAccountDetails masterAccount = this.master.getAccount();
+            //Altera para os novos valores
+            masterAccount.setBranchId(GlobalConfig.NEW_MASTER_BRANCH + "-" + GlobalConfig.NEW_MASTER_BRANCH_DV);
+            masterAccount.setAccountNumber(GlobalConfig.NEW_MASTER_ACCOUNT + "-" + GlobalConfig.NEW_MASTER_ACCOUNT_DV);
+            //Enumera e trata todas as transações da conta master
+            List<Transaction> mTL = this.master.getTransactionList();
+            transCount = 0;
+            try {
+                for (Transaction masterTransaction : mTL) {
+                    transCount++;
+                    this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
+                }
+            } catch (Exception e) {
+                throw new OFXException(String.format("T=%d - %s", transCount, e.getMessage()));
+            }
+            this.master.writeTo(this.master.getStdOutputFilename()); //Salva os novos arquivos com as alterações
+        }
+
         //Dados da conta slave
-        BankAccountDetails slaveAccount = this.slave.getAccount();
-        //Altera para os novos valores
-        slaveAccount.setBranchId(GlobalConfig.NEW_SLAVE_BRANCH + "-" + GlobalConfig.NEW_SLAVE_BRANCH_DV);
-        slaveAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
-
-        //Enumera e trata todas as transações da conta master
-        List<Transaction> mTL = this.master.getTransactionList();
-        int t = 0;
-        try {
-            for (Transaction masterTransaction : mTL) {
-                t++;
-                this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
+        if (this.slave != null) {
+            BankAccountDetails slaveAccount = this.slave.getAccount();
+            //Altera para os novos valores
+            slaveAccount.setBranchId(GlobalConfig.NEW_SLAVE_BRANCH + "-" + GlobalConfig.NEW_SLAVE_BRANCH_DV);
+            slaveAccount.setAccountNumber(GlobalConfig.NEW_SLAVE_ACCOUNT + "-" + GlobalConfig.NEW_SLAVE_ACCOUNT_DV);
+            //Varre as transações do slave, exceto as já atualizadas
+            List<Transaction> sTL = this.slave.getTransactionList();
+            transCount = 0;
+            try {
+                for (Transaction slaveTrans : sTL) {
+                    transCount++;
+                    this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
+                }
+            } catch (Exception e) {
+                throw new OFXException(String.format("T=%d - %s", transCount, e.getMessage()));
             }
-        } catch (Exception e) {
-            throw new OFXException(String.format("T=%d - %s", t, e.getMessage()));
+            this.slave.writeTo(this.slave.getStdOutputFilename()); //Salva os novos arquivos com as alterações
         }
-
-        //Varre as transações do slave, exceto as já atualizadas
-        List<Transaction> sTL = this.slave.getTransactionList();
-        t = 0;
-        try {
-            for (Transaction slaveTrans : sTL) {
-                t++;
-                this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
-            }
-        } catch (Exception e) {
-            throw new OFXException(String.format("T=%d - %s", t, e.getMessage()));
-        }
-
-        //Salva os novos arquivos com as alterações
-        this.master.writeTo(this.master.getStdOutputFilename());
-        this.slave.writeTo(this.slave.getStdOutputFilename());
     }
 
     private void updateTransaction(Transaction trans, String sourceBranch, String sourceAccount) throws OFXException {
