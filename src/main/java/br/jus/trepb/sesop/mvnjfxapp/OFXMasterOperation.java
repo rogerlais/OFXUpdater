@@ -175,8 +175,8 @@ public final class OFXMasterOperation {
     protected void exportCSVTransactionPairs(String filename) throws OFXException {
         StringBuilder result = new StringBuilder();
         result.append("ACCOUNT-MASTER,ACCOUNT-SLAVE,DTPOSTED-MASTER,DTPOSTED-SLAVE,TRNTYPE-MASTER,TRNTYPE-SLAVE,"
-                + "DTAVAILABLE-MASTER,DTAVAILABLE-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
-                + "CHECKNUM-SLAVE,REFNUM-MASTER,REFNUM-SLAVE,MEMO-MASTER,MEMO-SLAVE\n\r");
+            + "DTAVAILABLE-MASTER,DTAVAILABLE-SLAVE,TRNAMT-MASTER,TRNAMT-SLAVE,FITID-MASTER,FITID-SLAVE,CHECKNUM-MASTER,"
+            + "CHECKNUM-SLAVE,REFNUM-MASTER,REFNUM-SLAVE,MEMO-MASTER,MEMO-SLAVE\n\r");
         List<Transaction> masterList = this.master.getTransactionList();
         for (Transaction mTrans : masterList) {
             if (mTrans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) {
@@ -223,10 +223,10 @@ public final class OFXMasterOperation {
             String masterFullAgency = GlobalConfig.OLD_MASTER_BRANCH + "-" + GlobalConfig.OLD_MASTER_BRANCH_DV;
             String masterFullAccount = GlobalConfig.OLD_MASTER_ACCOUNT + "-" + GlobalConfig.OLD_MASTER_ACCOUNT_DV;
             if ( //teste de origem
-                    (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
-                    | //or
-                    (!this.master.getAccount().getAccountNumber().equals(masterFullAccount)) //conta
-                    ) {
+                (!this.master.getAccount().getBranchId().equals(masterFullAgency)) //agencia
+                | //or
+                (!this.master.getAccount().getAccountNumber().equals(masterFullAccount)) //conta
+                ) {
                 throw new OFXException("Dados para arquivo master inconsistentes");
             }
         }
@@ -236,10 +236,10 @@ public final class OFXMasterOperation {
             String slaveFullAgency = GlobalConfig.OLD_SLAVE_BRANCH + "-" + GlobalConfig.OLD_SLAVE_BRANCH_DV;
             String slaveFullAccount = GlobalConfig.OLD_SLAVE_ACCOUNT + "-" + GlobalConfig.OLD_SLAVE_ACCOUNT_DV;
             if ( //teste de origem
-                    (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
-                    | //or
-                    (!this.slave.getAccount().getAccountNumber().equals(slaveFullAccount)) //conta
-                    ) {
+                (!this.slave.getAccount().getBranchId().equals(slaveFullAgency)) //agencia
+                | //or
+                (!this.slave.getAccount().getAccountNumber().equals(slaveFullAccount)) //conta
+                ) {
                 throw new OFXException("Dados para arquivo slave inconsistentes");
             }
         }
@@ -300,9 +300,9 @@ public final class OFXMasterOperation {
         String newMemo = null;
         if ((newCheckNum == null) && (bbTrans.getPreLoadCellInfo() == null)) {  //Nada a alterar passa liso
             if ( //havendo envolvimento de qualquer uma das contas obrigatoriamente há alteração
-                    trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
-                    | //or
-                    trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) //transação envolve slave
+                trans.getCheckNumber().endsWith(GlobalConfig.OLD_MASTER_ACCOUNT) //transação envolve master
+                | //or
+                trans.getCheckNumber().endsWith(GlobalConfig.OLD_SLAVE_ACCOUNT)) //transação envolve slave
             {
                 throw new OFXException("Transação não capturada pelo mapeamento");
             }

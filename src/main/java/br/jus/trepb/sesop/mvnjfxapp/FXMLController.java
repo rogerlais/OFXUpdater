@@ -2,17 +2,17 @@ package br.jus.trepb.sesop.mvnjfxapp;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import java.nio.file.Paths;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 public class FXMLController implements Initializable {
 
@@ -118,12 +118,17 @@ public class FXMLController implements Initializable {
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
             controller.saveUpdatedOFX();  //altera os valores reais pelos fakes e salva com sufixo
 
+            //verifica se há processamento de fatura de cartão de crédito
+            filename = this.edtCreditCardOFX.getText();
+            if (!filename.isEmpty()) {
+                OFXCreditCardBilling ccBill = new OFXCreditCardBilling(filename);
+                ccBill.exportTo(ccBill.getDefaultExportFilename());
+            }
+
             //Exporta lista de transações pareadas
             //controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
-
             //Salva como csv
             //masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
-
             showAlert("Aviso:", "Operação finalizada com sucesso!");
 
         } catch (Exception exception) {

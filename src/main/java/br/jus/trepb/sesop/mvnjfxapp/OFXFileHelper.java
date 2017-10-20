@@ -158,11 +158,10 @@ public class OFXFileHelper {
      * @throws OFXParseException
      */
     public void read() throws IOException, OFXParseException {
-
         try (
-                FileInputStream fis = new FileInputStream(this.getInputFile());
-                Reader fr = new InputStreamReader(fis, "windows-1252") //Requerido para interpertrar corretamente os dados
-                ) //allocation
+            FileInputStream fis = new FileInputStream(this.getInputFile());
+            Reader fr = new InputStreamReader(fis, "windows-1252") //Requerido para interpertrar corretamente os dados
+            ) //allocation
         {
             AggregateUnmarshaller a = new AggregateUnmarshaller(ResponseEnvelope.class);  //Adapter para serialização
             this.OFXContent = (ResponseEnvelope) a.unmarshal(fr);
@@ -171,6 +170,7 @@ public class OFXFileHelper {
 
     /**
      * SignonResponse after read the file
+     *
      * @return
      * @throws java.io.IOException
      * @throws com.webcohesion.ofx4j.io.OFXParseException
