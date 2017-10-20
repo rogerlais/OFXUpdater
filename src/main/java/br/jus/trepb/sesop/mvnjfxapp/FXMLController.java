@@ -115,20 +115,17 @@ public class FXMLController implements Initializable {
             } else {
             }
 
+            //Gera arquivos fake
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
             controller.saveUpdatedOFX();  //altera os valores reais pelos fakes e salva com sufixo
 
-            //verifica se há processamento de fatura de cartão de crédito
+            //verifica se há processamento de fatura de cartão de crédito e gera txt com exportação
             filename = this.edtCreditCardOFX.getText();
             if (!filename.isEmpty()) {
                 OFXCreditCardBilling ccBill = new OFXCreditCardBilling(filename);
                 ccBill.exportTo(ccBill.getDefaultExportFilename());
             }
 
-            //Exporta lista de transações pareadas
-            //controller.exportCSVTransactionPairs("D:\\Temp\\TransPairs.csv");
-            //Salva como csv
-            //masterOFX.exportAsCSV("D:\\Temp\\Out.csv");
             showAlert("Aviso:", "Operação finalizada com sucesso!");
 
         } catch (Exception exception) {

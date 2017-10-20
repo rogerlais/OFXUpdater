@@ -52,12 +52,10 @@ public class OFXCreditCardBilling {
             throw new OFXException("Erro lendo OFX de origem:" + e.getLocalizedMessage());
         }
         //(CreditCardStatementResponseTransaction)
-        ( * duas
-        contas presentes - lembre - se *
-        )
-        List<ResponseMessage> list = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
-        for (Iterator<ResponseMessage> it = list.iterator(); it.hasNext();) {
-            CreditCardStatementResponseTransaction responseMessage = (CreditCardStatementResponseTransaction) it.next();
+        List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
+        for (Iterator<ResponseMessage> accounts = accountList.iterator(); accounts.hasNext();) {  //Varre as contas presentes, para o amex serão 2
+
+            ResponseMessage responseMessage = (ResponseMessage) accounts.next();
             CreditCardStatementResponse itemX = responseMessage.getMessage();
         }
 
