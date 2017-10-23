@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class OFXCreditCardBilling {
 
     public String getDefaultExportFilename() {
         File f = new File(this.sourceFile);
-        String ret = f.getParentFile().getAbsolutePath() + f.getName().replace(".ofx", "_upd.txt");
+        String ret = f.getParentFile().getAbsolutePath() + "\\" + f.getName().replace(".ofx", "_upd.txt");
         return ret;
     }
 
@@ -55,26 +56,17 @@ public class OFXCreditCardBilling {
         }
         //(CreditCardStatementResponseTransaction)
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
+        SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         for (Iterator<ResponseMessage> it = accountList.iterator(); it.hasNext();) {
             CreditCardStatementResponseTransaction responseMessage = (CreditCardStatementResponseTransaction) it.next();
             List<Transaction> transList = responseMessage.getMessage().getTransactionList().getTransactions();
             for (Transaction transaction : transList) {
-                sb.append(transaction.getDatePosted());
+                sb.append(fmt.format(transaction.getDatePosted()));
                 sb.append("\t");
-                sb.append(transaction.getAmount()); //inverter sinal para obter significado
+                sb.append(-1 * transaction.getAmount()); //inverter sinal para obter significado
                 sb.append("\t");
                 sb.append(transaction.getMemo());
                 sb.append("\r\n");
-                'saida a corrigir abaixo'
-                /*
-
-                Mon Aug 21 00:00:01 GMT-03:00 2017	3013.54	SALDO ANTERIOR
-                Sat Nov 25 00:00:01 GMT-03:00 2017	160.55	CARREFOUR.COM 10/1010/10
-                Fri Jan 13 00:00:01 GMT-03:00 2017	18.14	EXTRA.COM 8/88/8
-                Sat Mar 18 00:00:01 GMT-03:00 2017	318.98	WALMART COM ELETRONICO 6/96/9
-                Thu May 04 00:00:01 GMT-03:00 2017	129.89
-
-                 */
             }
         }
         if (sb.length() > 1) {
@@ -82,14 +74,6 @@ public class OFXCreditCardBilling {
                 out.println(sb.toString());
             }
         }
-
-        /*
-        CreditCardResponseMessageSet items = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
-        List<ResponseMessage> transList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
-        for (ResponseMessage item : transList) {
-            item.getResponseMessageName();
-        }
-         */
     }
 
 }
