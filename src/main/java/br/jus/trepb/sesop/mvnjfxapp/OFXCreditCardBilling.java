@@ -54,7 +54,6 @@ public class OFXCreditCardBilling {
         } catch (Exception e) {
             throw new OFXException("Erro lendo OFX de origem:" + e.getLocalizedMessage());
         }
-        //(CreditCardStatementResponseTransaction)
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         for (Iterator<ResponseMessage> it = accountList.iterator(); it.hasNext();) {
