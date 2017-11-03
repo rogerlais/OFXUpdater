@@ -62,6 +62,8 @@ public class OFXCreditCardBilling {
             for (Transaction transaction : transList) {
                 sb.append(fmt.format(transaction.getDatePosted()));
                 sb.append("\t");
+                (converter forcando  para usar virgula
+                )
                 sb.append(-1 * transaction.getAmount()); //inverter sinal para obter significado
                 sb.append("\t");
                 sb.append(transaction.getMemo());
