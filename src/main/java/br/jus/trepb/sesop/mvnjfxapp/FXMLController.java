@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -34,6 +35,9 @@ public class FXMLController implements Initializable {
     private Button btnCancel;
     @FXML
     private String lastUsedDir;
+
+    @FXML
+    private Object edtCreditCardTresholdDay;
 
     @FXML
     private void handleButtonCancel(ActionEvent event) {
@@ -123,7 +127,8 @@ public class FXMLController implements Initializable {
             filename = this.edtCreditCardOFX.getText();
             if (!filename.isEmpty()) {
                 OFXCreditCardBilling ccBill = new OFXCreditCardBilling(filename);
-                ccBill.exportTo(ccBill.getDefaultExportFilename());
+                //Object obj = this.edtCreditCardTresholdDay.getValue();
+                ccBill.exportTo(ccBill.getDefaultExportFilename(), 0);
             }
 
             showAlert("Aviso:", "Operação finalizada com sucesso!");

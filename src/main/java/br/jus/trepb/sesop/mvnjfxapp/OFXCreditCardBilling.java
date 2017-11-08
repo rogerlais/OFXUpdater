@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class OFXCreditCardBilling {
         return ret;
     }
 
-    public void exportTo(String destFilename) throws OFXException, FileNotFoundException {
+    public void exportTo(String destFilename, int tresholdDay) throws OFXException, FileNotFoundException {
         StringBuilder sb = new StringBuilder();
         try {
             try (
@@ -54,6 +55,7 @@ public class OFXCreditCardBilling {
         } catch (Exception e) {
             throw new OFXException("Erro lendo OFX de origem:" + e.getLocalizedMessage());
         }
+        Date tresholdDate = getTresholdDate(); //usa this.OFXContent para identificar dia(info HC)
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         for (Iterator<ResponseMessage> it = accountList.iterator(); it.hasNext();) {
@@ -62,11 +64,10 @@ public class OFXCreditCardBilling {
             for (Transaction transaction : transList) {
                 sb.append(fmt.format(transaction.getDatePosted()));
                 sb.append("\t");
-                (converter forcando  para usar virgula
-                )
-                sb.append(-1 * transaction.getAmount()); //inverter sinal para obter significado
+                Double ammount = -1 * transaction.getAmount();//inverter sinal para obter significado
+                sb.append(ammount.toString().replace(".", ",")); //usar virgula para importador não frescar
                 sb.append("\t");
-                sb.append(transaction.getMemo());
+                String desc = this.getTranslatedMemo(transaction, tresholdDate);
                 sb.append("\r\n");
             }
         }
@@ -75,6 +76,26 @@ public class OFXCreditCardBilling {
                 out.println(sb.toString());
             }
         }
+    }
+
+    private Date getTresholdDate() {
+        //Abre arquivo e dependendo do emissor (BB ou Amex) infere uma data de compra ótima.
+        //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
+        return null;
+    }
+
+    private String getTranslatedMemo(Transaction transaction, Date tresholdDate) {
+        String desc = transaction.getMemo();
+        if (desc.contains("/")) {  //Parcelada, será lançada na mão mesmo
+            return desc;
+        } else {
+            if (tresholdDate.compareTo(transaction.getDatePosted()) >= 1) {
+
+            } else {
+
+            }
+        }
+        return null;
     }
 
 }
