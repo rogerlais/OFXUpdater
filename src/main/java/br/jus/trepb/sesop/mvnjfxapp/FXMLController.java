@@ -94,7 +94,6 @@ public class FXMLController implements Initializable {
     @FXML
     private void handleButtonExecute(ActionEvent event) {
 
-        //PRE: 2 filenames and valids ofx files
         System.out.println("Iniciando operação!");
 
         try {
@@ -127,7 +126,9 @@ public class FXMLController implements Initializable {
             filename = this.edtCreditCardOFX.getText();
             if (!filename.isEmpty()) {
                 OFXCreditCardBilling ccBill = new OFXCreditCardBilling(filename);
+                ccBill.read();
                 //Object obj = this.edtCreditCardTresholdDay.getValue();
+                ccBill.writeTo("C:\\temp\\out.ofx");
                 ccBill.exportTo(ccBill.getDefaultExportFilename(), 0);
             }
 
