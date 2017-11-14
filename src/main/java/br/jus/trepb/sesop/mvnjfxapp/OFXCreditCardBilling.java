@@ -8,8 +8,13 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
+import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponseTransaction;
+import com.webcohesion.ofx4j.domain.data.signon.FinancialInstitution;
+import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
+import com.webcohesion.ofx4j.domain.data.signon.SignonResponseMessageSet;
 import com.webcohesion.ofx4j.io.AggregateMarshaller;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.OFXParseException;
@@ -78,6 +83,15 @@ public class OFXCreditCardBilling {
     private Date getTresholdDate() {
         //Abre arquivo e dependendo do emissor (BB ou Amex) infere uma data de compra ótima.
         //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
+        CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
+        CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
+        String AN = masterTransList.getMessage().getAccount().getAccountNumber();
+        +rever regras +
+        if (AN.endsWith("X73008")) {  //Amex
+
+        } else {  //Ourocard
+
+        }
         return null;
     }
 
