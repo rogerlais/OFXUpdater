@@ -85,10 +85,9 @@ public class OFXCreditCardBilling {
         //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
         CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
         CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
-        String AN = masterTransList.getMessage().getAccount().getAccountNumber();
-        +rever regras +
-        if (AN.endsWith("X73008")) {  //Amex
-
+        String accNumber = masterTransList.getMessage().getAccount().getAccountNumber();
+        if (accNumber.endsWith(GlobalConfig.CC_AMEX_MASTER_ACCOUNT_SUFIX)) {  //Amex
+             = usar "masterTransList.getMessage().getTransactionList().start"=
         } else {  //Ourocard
 
         }

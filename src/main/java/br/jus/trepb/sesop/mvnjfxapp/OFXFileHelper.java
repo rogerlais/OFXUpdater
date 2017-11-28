@@ -209,7 +209,7 @@ public class OFXFileHelper {
     /**
      * Writes the actual content from OFXContent to the specified filename's Based at link
      *
-     * @see <a href=http://javadevtips.blogspot.com.br/2011/11/creating-mock-ofx-server.html </a>
+     * @see <a href=http://javadevtips.blogspot.com.br/2011/11/creating-mock-ofx-server.html /a>
      *
      * @param filename
      * @throws java.io.FileNotFoundException
@@ -302,14 +302,12 @@ public class OFXFileHelper {
         MessageSetType type = MessageSetType.banking;
         ResponseMessageSet message = re.getMessageSet(type);  //pega apenas o conjunto para a classe filtrada acima
         if (message != null) {
-            List bank = ((BankingResponseMessageSet) message).getStatementResponses();
+            List<BankStatementResponseTransaction> bank = ((BankingResponseMessageSet) message).getStatementResponses();
             StringBuilder result = new StringBuilder();
             result.append("ACCOUNT,OFX-DATE,TRNTYPE,DTPOSTED,TRNAMT,FITID,CHECKNUM,REFNUM,MEMO\n\r");
-            for (Iterator it = bank.iterator(); it.hasNext();) {
-                BankStatementResponseTransaction b = (BankStatementResponseTransaction) it.next();
-                List list = b.getMessage().getTransactionList().getTransactions();
-                for (Iterator itT = list.iterator(); itT.hasNext();) {
-                    Transaction transaction = (Transaction) itT.next();
+            for (BankStatementResponseTransaction b : bank) {
+                List<Transaction> list = b.getMessage().getTransactionList().getTransactions();
+                for (Transaction transaction : list) {
                     result.append(toCsvRow(b.getMessage().getAccount(), sr.getTimestamp(), transaction));
                 }
             }
