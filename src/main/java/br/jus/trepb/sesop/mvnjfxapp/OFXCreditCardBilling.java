@@ -8,13 +8,9 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessage;
-import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponseTransaction;
-import com.webcohesion.ofx4j.domain.data.signon.FinancialInstitution;
-import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
-import com.webcohesion.ofx4j.domain.data.signon.SignonResponseMessageSet;
 import com.webcohesion.ofx4j.io.AggregateMarshaller;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.OFXParseException;
@@ -31,6 +27,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +53,7 @@ public class OFXCreditCardBilling {
 
     public void exportTo(String destFilename, int tresholdDay) throws OFXException, FileNotFoundException {
         StringBuilder sb = new StringBuilder();
-        Date tresholdDate = getTresholdDate(); //usa this.OFXContent para identificar dia(info HC)
+        Date tresholdDate = getTresholdDate(tresholdDay); //usa this.OFXContent para identificar dia(info HC)
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         for (Iterator<ResponseMessage> it = accountList.iterator(); it.hasNext();) {
@@ -80,19 +77,31 @@ public class OFXCreditCardBilling {
         }
     }
 
-    private Date getTresholdDate() {
+    private Date getTresholdDate(int decrementDays) {
         //Abre arquivo e dependendo do emissor (BB ou Amex) infere uma data de compra ótima.
         //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
         CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
         CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
         String AN = masterTransList.getMessage().getAccount().getAccountNumber();
-        +rever regras +
+        Date resultDate = null;
         if (AN.endsWith("X73008")) {  //Amex
-
+            resultDate = masterTransList.getMessage().getTransactionList().getStart();  //para BB inicia em data anterior as vezes
         } else {  //Ourocard
-
+            if (AN.contains("5485000000006565")) {
+                //BB ourocard
+                resultDate = masterTransList.getMessage().getLedgerBalance().getAsOfDate();
+            }
         }
-        return null;
+        if (resultDate != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(resultDate);
+            if (decrementDays == 0) {
+                decrementDays = -12;
+            }
+            cal.add(Calendar.DATE, decrementDays);
+            resultDate = cal.getTime();
+        }
+        return resultDate;
     }
 
     private String getTranslatedMemo(Transaction transaction, Date tresholdDate) {
