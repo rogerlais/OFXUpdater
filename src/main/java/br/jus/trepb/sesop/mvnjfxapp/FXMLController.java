@@ -37,7 +37,7 @@ public class FXMLController implements Initializable {
     private String lastUsedDir;
 
     @FXML
-    private Spinner edtCreditCardTresholdDay;
+    private Spinner<Integer> edtCreditCardTresholdDay;
 
     @FXML
     private void handleButtonCancel(ActionEvent event) {
@@ -129,7 +129,7 @@ public class FXMLController implements Initializable {
                 ccBill.read();
                 //Object obj = this.edtCreditCardTresholdDay.getValue();
                 ccBill.writeTo("C:\\temp\\out.ofx");
-                int deltaDays = -1 * Integer.parseInt(this.edtCreditCardTresholdDay.toString());
+                int deltaDays = -1 * this.edtCreditCardTresholdDay.getValueFactory().getValue();
                 ccBill.exportTo(ccBill.getDefaultExportFilename(), deltaDays);
             }
 
