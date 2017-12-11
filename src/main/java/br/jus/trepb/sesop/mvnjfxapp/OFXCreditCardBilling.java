@@ -77,7 +77,7 @@ public class OFXCreditCardBilling {
         }
     }
 
-    private Date getTresholdDate(int decrementDays) {
+    private Date getTresholdDate(int decrementDays) throws OFXException {
         //Abre arquivo e dependendo do emissor (BB ou Amex) infere uma data de compra ótima.
         //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
         CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
@@ -90,13 +90,17 @@ public class OFXCreditCardBilling {
             if (AN.contains("5485000000006565")) {
                 //BB ourocard
                 resultDate = masterTransList.getMessage().getLedgerBalance().getAsOfDate();
+            } else {
+                throw new OFXException("Cartão não localizado na lista de cartões conhecidos para cáculo da data limite");
             }
         }
         if (resultDate != null) {
             Calendar cal = Calendar.getInstance();
             cal.setTime(resultDate);
             if (decrementDays == 0) {
-                decrementDays = -12;
+                decrementDays = -40;
+            } else {
+                decrementDays -= 30;
             }
             cal.add(Calendar.DATE, decrementDays);
             resultDate = cal.getTime();
@@ -109,13 +113,11 @@ public class OFXCreditCardBilling {
         if (desc.contains("/")) {  //Parcelada, será lançada na mão mesmo
             return desc;
         } else {
-            if (tresholdDate.compareTo(transaction.getDatePosted()) >= 1) {
-
-            } else {
-
+            if (tresholdDate.compareTo(transaction.getDatePosted()) > 0) {
+                desc += "(*)";
             }
         }
-        return null;
+        return desc;
     }
 
     public void writeTo(String filename) throws FileNotFoundException, UnsupportedEncodingException, IOException {
