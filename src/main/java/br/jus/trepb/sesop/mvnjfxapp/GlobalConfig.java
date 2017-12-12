@@ -62,7 +62,9 @@ public class GlobalConfig {
     public static final int REFNUM_TRANSFER_LENGTH = 19;
     public static final int REFNUM_TRANSFER_SAVINGS = 17;
 
-    public static final String CC_AMEX_MASTER_ACCOUNT_SUFIX = "X73008";
+    public static final String CC_AMEX_MASTER_ACCOUNT_MASK = "XXXXXXXXXX73008";
+
+    public static final String CC_BB_MASTER_ACCOUNT_MASK = "5485000000006565";
 
     public static String trimChar(String str, char c) {
         //TODO: Levar para biblioteca

@@ -56,6 +56,8 @@ public class OFXCreditCardBilling {
         Date tresholdDate = getTresholdDate(tresholdDay); //usa this.OFXContent para identificar dia(info HC)
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+        sb.append("Data limite calculada = " + fmt.format(tresholdDate));
+        sb.append("\r\n");
         for (Iterator<ResponseMessage> it = accountList.iterator(); it.hasNext();) {
             CreditCardStatementResponseTransaction responseMessage = (CreditCardStatementResponseTransaction) it.next();
             List<Transaction> transList = responseMessage.getMessage().getTransactionList().getTransactions();
@@ -65,7 +67,7 @@ public class OFXCreditCardBilling {
                 Double ammount = -1 * transaction.getAmount();//inverter sinal para obter significado
                 sb.append(ammount.toString().replace(".", ",")); //usar virgula para importador não frescar
                 sb.append("\t");
-                String desc = this.getTranslatedMemo(transaction, tresholdDate);
+                String desc = this.getTranslatedMemo(transaction, fmt, tresholdDate);
                 sb.append(desc);
                 sb.append("\r\n");
             }
@@ -84,10 +86,10 @@ public class OFXCreditCardBilling {
         CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
         String AN = masterTransList.getMessage().getAccount().getAccountNumber();
         Date resultDate = null;
-        if (AN.endsWith("X73008")) {  //Amex
+        if (AN.endsWith(GlobalConfig.CC_AMEX_MASTER_ACCOUNT_MASK)) {  //Amex
             resultDate = masterTransList.getMessage().getTransactionList().getStart();  //para BB inicia em data anterior as vezes
         } else {  //Ourocard
-            if (AN.contains("5485000000006565")) {
+            if (AN.contains(GlobalConfig.CC_BB_MASTER_ACCOUNT_MASK)) {
                 //BB ourocard
                 resultDate = masterTransList.getMessage().getLedgerBalance().getAsOfDate();
             } else {
@@ -100,7 +102,7 @@ public class OFXCreditCardBilling {
             if (decrementDays == 0) {
                 decrementDays = -40;
             } else {
-                decrementDays -= 30;
+                decrementDays -= 30;  //retrocede sempre 30 além do informado(máxima variação 30 + 30 = -60 dias)
             }
             cal.add(Calendar.DATE, decrementDays);
             resultDate = cal.getTime();
@@ -108,13 +110,13 @@ public class OFXCreditCardBilling {
         return resultDate;
     }
 
-    private String getTranslatedMemo(Transaction transaction, Date tresholdDate) {
+    private String getTranslatedMemo(Transaction transaction, SimpleDateFormat fmt, Date tresholdDate) {
         String desc = transaction.getMemo();
         if (desc.contains("/")) {  //Parcelada, será lançada na mão mesmo
             return desc;
         } else {
             if (tresholdDate.compareTo(transaction.getDatePosted()) > 0) {
-                desc += "(*)";
+                desc += "RefDate=" + fmt.format(transaction.getDatePosted());
             }
         }
         return desc;
