@@ -116,7 +116,7 @@ public class OFXCreditCardBilling {
             return desc;
         } else {
             if (tresholdDate.compareTo(transaction.getDatePosted()) > 0) {
-                desc += "RefDate=" + fmt.format(transaction.getDatePosted());
+                desc += " RDate(" + fmt.format(transaction.getDatePosted()) + ")";
             }
         }
         return desc;
@@ -142,6 +142,7 @@ public class OFXCreditCardBilling {
             }
         }
     }
+
     /**
      * Read the input file to internal memory Split the content into several parts and validate your cardinality, be only one bank
      * and only banking elements

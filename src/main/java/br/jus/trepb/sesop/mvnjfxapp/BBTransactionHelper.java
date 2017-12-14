@@ -247,6 +247,7 @@ public class BBTransactionHelper {
                         break;
                     }
                     case 80:
+                    case 87:
                     case 88:
                     case 89: {  //pacote de serviços(demais dados não mapeados e sempre se alteram)
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
@@ -255,6 +256,7 @@ public class BBTransactionHelper {
                         }
                         break;
                     }
+                    case 10: //restituição IRPF
                     case 99: {  //pagamento de convenio(agua, luz, telefone, etc)
                         break;
                     }
@@ -446,7 +448,7 @@ public class BBTransactionHelper {
                     if (this.operationCode == 0) { //Operação não tratada/mapeada
                         result = this.originalTransaction.getMemo();
                     } else {
-                        Integer[] BANK_OPERATION_CODES = new Integer[]{80, 88, 89}; //Lista de operações bancarias ou saques
+                        Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 87, 88, 89}; //Lista de operações bancarias ou saques
                         if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (this.variantCode == 0)) {
                             result = this.originalTransaction.getMemo();
                         } else {
@@ -568,6 +570,7 @@ public class BBTransactionHelper {
             if (this.preloadCellInfo == null) {
                 switch (this.operationCode) {
                     case 0:  //indeterminada
+                    case 10: //Restituição IRPF(mantem dados)
                     case 80: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
                     case 88: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
                     case 89: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
