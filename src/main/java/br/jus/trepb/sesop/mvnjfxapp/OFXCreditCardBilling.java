@@ -53,7 +53,21 @@ public class OFXCreditCardBilling {
 
     public void exportTo(String destFilename, int tresholdDay) throws OFXException, FileNotFoundException {
         StringBuilder sb = new StringBuilder();
-        Date tresholdDate = getTresholdDate(tresholdDay); //usa this.OFXContent para identificar dia(info HC)
+        Date tresholdDate = this.getTresholdDate(tresholdDay); //usa this.OFXContent para identificar dia(info HC)
+        int signalValue = 0;
+        switch (this.getCreditCardType()) {
+            case AMEX: {
+                signalValue = -1;
+                break;
+            }
+            case OUROCARD: {
+                signalValue = 1;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
         List<ResponseMessage> accountList = this.OFXContent.getMessageSet(MessageSetType.creditcard).getResponseMessages();
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         sb.append("Data limite calculada = " + fmt.format(tresholdDate));
@@ -64,7 +78,7 @@ public class OFXCreditCardBilling {
             for (Transaction transaction : transList) {
                 sb.append(fmt.format(transaction.getDatePosted()));
                 sb.append("\t");
-                Double ammount = -1 * transaction.getAmount();//inverter sinal para obter significado
+                Double ammount = signalValue * transaction.getAmount();//inverter sinal para obter significado
                 sb.append(ammount.toString().replace(".", ",")); //usar virgula para importador não frescar
                 sb.append("\t");
                 String desc = this.getTranslatedMemo(transaction, fmt, tresholdDate);
@@ -75,6 +89,22 @@ public class OFXCreditCardBilling {
         if (sb.length() > 1) {
             try (PrintWriter out = new PrintWriter(destFilename)) {
                 out.println(sb.toString());
+            }
+        }
+    }
+
+    public CreditCardTypes getCreditCardType() throws OFXException {
+        CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
+        CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
+        String AN = masterTransList.getMessage().getAccount().getAccountNumber();
+        Date resultDate = null;
+        if (AN.endsWith(GlobalConfig.CC_AMEX_MASTER_ACCOUNT_MASK)) {  //Amex
+            return CreditCardTypes.AMEX;
+        } else {  //Ourocard
+            if (AN.contains(GlobalConfig.CC_BB_MASTER_ACCOUNT_MASK)) {
+                return CreditCardTypes.OUROCARD;
+            } else {
+                throw new OFXException("Cartão não localizado na lista de cartões conhecidos para cáculo da data limite");
             }
         }
     }
