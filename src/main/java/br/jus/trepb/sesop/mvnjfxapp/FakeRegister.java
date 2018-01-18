@@ -189,6 +189,6 @@ public class FakeRegister {
      * @return the cashOutAccount
      */
     public String getCashOutAccount() {
-        return cashOutAccount;
+        return this.cashOutAccount;
     }
 }

@@ -261,18 +261,24 @@ public class BBTransactionHelper {
                         break;
                     }
                     default: {
-                        this.targetBranch = sourceAccount; //Usar o valor de referência
-                        if ( //operação de saque conta master
-                                (this.targetBranch.equals(GlobalConfig.OLD_MASTER_ACCOUNT)
-                                && //bate como sendo saque
-                                chkNum.endsWith(this.getFakeData().getCashOutAccount())) //conta saque
-                                || ( //ou conta slave
-                                (this.targetBranch.equals(GlobalConfig.OLD_SLAVE_ACCOUNT)
-                                && //bate como sendo saque
-                                chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
-                            break;
+                        if (CheckScheduledTransfer(refNum, chkNum, sourceAccount)) {
+                            //Montagem de saida será alterada para esta operação
+
                         } else {
-                            throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                            this.targetBranch = sourceAccount; //Usar o valor de referência
+                            if ( //operação de saque conta master
+                                    (this.targetBranch.equals(GlobalConfig.OLD_MASTER_ACCOUNT)
+                                    && //bate como sendo saque
+                                    chkNum.endsWith(this.getFakeData().getCashOutAccount())) //conta saque
+                                    || ( //ou conta slave
+                                    (this.targetBranch.equals(GlobalConfig.OLD_SLAVE_ACCOUNT)
+                                    && //bate como sendo saque
+                                    chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
+                                break;
+                            } else {
+                                throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                            }
+
                         }
                     }
                 }
@@ -281,7 +287,24 @@ public class BBTransactionHelper {
             default: {
                 this.operationCode = 0;  //anula unica não nula anteriormente
             }
+        } //end switch para tamanho do código informado por refnum
+    }
+
+    private boolean CheckScheduledTransfer(String refNum, String chkNum, String sourceAccount) {
+        /*Verificar se o formato de checknum e refnum obedece o padrão
+        <CHECKNUM>100000021038</CHECKNUM>
+        <REFNUM>350.100.000.021.038</REFNUM>
+        <MEMO>Transferência Agendada - 25/12 3501      21038-2 MERCIA VIEIRA</MEMO>
+         */
+        boolean result = false;
+        String branchByRefNum = refNum.substring(0, 5).replace(".", "").String accountByCheckNum = Strings.trimChar(chkNum.substring(6, 12), '0');
+        for (FakeRegister reg : this.fakeList) {
+            if (reg.getTrueBranch().equals(branchByRefNum) & reg.getTrueAccount().equals(accountByCheckNum)) {
+                result = true;
+                break;
+            }
         }
+        return result;
     }
 
     private String targetAccountDV;
