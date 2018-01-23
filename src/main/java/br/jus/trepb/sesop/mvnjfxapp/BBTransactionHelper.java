@@ -154,6 +154,7 @@ public class BBTransactionHelper {
         this.targetBranch = GlobalConfig.trimChar(sourceBranch, '0');
         this.originalTransaction = sourceTransaction;  //usada para remontar carga de celular pré-pago
         this.preloadCellInfo = this.findCellInfo(chkNum, refNum);
+        this.scheduledTransferRegister = this.GetScheduledTransferRegister(refNum, chkNum, sourceAccount);  //localiza trfs agendadas cujos dados são "canonicos"
 
         if (chkNum.endsWith(sourceAccount)) { //transação interna c/c <-> poupança ou saque da conta
             this.selfTransferAdjust(refNum, chkNum, sourceAccount);
@@ -261,9 +262,11 @@ public class BBTransactionHelper {
                         break;
                     }
                     default: {
-                        if (CheckScheduledTransfer(refNum, chkNum, sourceAccount)) {
+                        if (this.scheduledTransferRegister != null) {
                             //Montagem de saida será alterada para esta operação
-
+                            this.setTargetAccount(scheduledTransferRegister.getTrueAccount());
+                            this.setTargetBranch(scheduledTransferRegister.getTrueBranch());
+                            this.setTargetAccountDV(getModulo11(scheduledTransferRegister.getTrueAccount()));
                         } else {
                             this.targetBranch = sourceAccount; //Usar o valor de referência
                             if ( //operação de saque conta master
@@ -290,21 +293,20 @@ public class BBTransactionHelper {
         } //end switch para tamanho do código informado por refnum
     }
 
-    private boolean CheckScheduledTransfer(String refNum, String chkNum, String sourceAccount) {
+    private FakeRegister GetScheduledTransferRegister(String refNum, String chkNum, String sourceAccount) {
         /*Verificar se o formato de checknum e refnum obedece o padrão
         <CHECKNUM>100000021038</CHECKNUM>
         <REFNUM>350.100.000.021.038</REFNUM>
         <MEMO>Transferência Agendada - 25/12 3501      21038-2 MERCIA VIEIRA</MEMO>
          */
-        boolean result = false;
-        String branchByRefNum = refNum.substring(0, 5).replace(".", "").String accountByCheckNum = Strings.trimChar(chkNum.substring(6, 12), '0');
+        String branchByRefNum = GlobalConfig.trimChar(refNum.substring(0, 5).replace(".", ""), '0');
+        String accountByCheckNum = GlobalConfig.trimChar(chkNum.substring(6, 12), '0');
         for (FakeRegister reg : this.fakeList) {
             if (reg.getTrueBranch().equals(branchByRefNum) & reg.getTrueAccount().equals(accountByCheckNum)) {
-                result = true;
-                break;
+                return reg;
             }
         }
-        return result;
+        return null;
     }
 
     private String targetAccountDV;
@@ -371,11 +373,12 @@ public class BBTransactionHelper {
         this.operationCode = operationCode;
     }
 
-    private String targetBranch;
-    private String targetAccount;
+    private String targetBranch; //Agência fonte da operação
+    private String targetAccount;  //Conta fonte da operação
     private int variantCode;  //Valor padrão para transferencia entre contas
     private int operationCode;  //Valor padrão para transferncia entre contas
-    private final PreLoadCellInfo preloadCellInfo;
+    private final PreLoadCellInfo preloadCellInfo;  //Mapeamento de operação de recarga de celular
+    private final FakeRegister scheduledTransferRegister; //Mapeameamento de transferencia agendada para conta de destino
 
     public String getRefNum() {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
@@ -407,91 +410,102 @@ public class BBTransactionHelper {
         return result;
     }
 
-    String getFakeMemo() throws OFXException {
-
+    protected String getFakeMemo() throws OFXException {
         String result = null;
         PreLoadCellInfo cellInfo = this.getPreLoadCellInfo();
-        if (cellInfo == null) {
+        if (cellInfo != null) {
+            result = getFakeMemoByCellInfo(cellInfo);
+        } else {
             FakeRegister fData = this.getFakeData();
             if (fData == null) {  //Sem registro de mapeamento(isso pode ser perigoso)
                 result = this.originalTransaction.getMemo();
                 FXMLController.showAlert("Aviso:", "Encontrada operação não mapeada:\n\r" + result);
             } else {
-                String impactedAccountFull = BBDigitVerifier.padLeftString(fData.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, ' ') + "-" + fData.getFakeAccountVD();
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(this.originalTransaction.getDatePosted());
-                String prefix;
-                if (isInternalTransaction) {
-                    switch (this.operationCode) {
-                        case 0: {
-                            prefix = "Transferido da poupança - ";
-                            break;
-                        }
-                        //case 52: //?
-                        case 60: { //Depósito poupança pela C/C
-                            impactedAccountFull = String.format("%2d", this.variantCode)
-                                    + BBDigitVerifier.padLeftString(fData.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, '0')
-                                    + "-" + fData.getFakeAccountVD();
-                            prefix = "Aplicação Poupança - ";
-                            break;
-                        }
-                        case 51: { //Saque poupança pela C/C
-                            //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
-                            prefix = "Transferido da poupança - ";
-                            break;
-                        }
-                        default: {
-                            prefix = null;
-                        }
-                    }
-                } else {
-                    switch (this.operationCode) {
-                        case 22:
-                        case 52:
-                        case 60: { //Depósito poupança pela C/C
-                            if (this.isInternalTransaction) {
-                                impactedAccountFull = String.format("%d00", this.operationCode) + impactedAccountFull; //altera conta impactada apenas para pouança
-                                prefix = "Aplicação Poupança - ";
-                            } else {
-                                prefix = "Transferência on line - ";
-                            }
-                            break;
-                        }
-                        case 51: { //Saque poupança pela C/C
-                            //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
-                            prefix = "Transferido da poupança - ";
-                            break;
-                        }
-                        default: {
-                            prefix = null;
-                        }
-                    }
+                result = getFakeMemoByFakeData(fData, result);
+            }
+        }
+        return BBTransactionHelper.finalFilterMemo(result.trim());
+    }
+
+    private String getFakeMemoByFakeData(FakeRegister fData, String result) throws UnsupportedOperationException, OFXException {
+        String impactedAccountFull = BBDigitVerifier.padLeftString(fData.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, ' ') + "-" + fData.getFakeAccountVD();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(this.originalTransaction.getDatePosted());
+        String prefix;
+        if (isInternalTransaction) {
+            switch (this.operationCode) {
+                case 0: {
+                    prefix = "Transferido da poupança - ";
+                    break;
                 }
-                if (prefix == null) {
-                    if (this.operationCode == 0) { //Operação não tratada/mapeada
-                        result = this.originalTransaction.getMemo();
-                    } else {
-                        Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 87, 88, 89}; //Lista de operações bancarias ou saques
-                        if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (this.variantCode == 0)) {
-                            result = this.originalTransaction.getMemo();
-                        } else {
-                            throw new UnsupportedOperationException(
-                                    String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
-                                            this.operationCode));
-                        }
-                    }
-                } else {
-                    String dateStr = String.format("%1$02d/%2$02d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1);
-                    prefix += dateStr;
-                    result = prefix + " " + Strings.padEnd(this.getFakeTargetBranch(), 4, ' ')
-                            + " " + impactedAccountFull + " " + this.getFakeShortName(); //?? como pegar o complemento
+                //case 52: //?
+                case 60: { //Depósito poupança pela C/C
+                    impactedAccountFull = String.format("%2d", this.variantCode)
+                            + BBDigitVerifier.padLeftString(fData.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, '0')
+                            + "-" + fData.getFakeAccountVD();
+                    prefix = "Aplicação Poupança - ";
+                    break;
+                }
+                case 51: { //Saque poupança pela C/C
+                    //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
+                    prefix = "Transferido da poupança - ";
+                    break;
+                }
+                default: {
+                    prefix = null;
                 }
             }
         } else {
-            result = "Telefone Pre-Pago - " + Integer.toString(cellInfo.getDDD()) + cellInfo.getFakeCellNumber() + " " + cellInfo.getFakeDescription();
+            switch (this.operationCode) {
+                case 22:
+                case 52:
+                case 60: { //Depósito poupança pela C/C
+                    if (this.isInternalTransaction) {
+                        impactedAccountFull = String.format("%d00", this.operationCode) + impactedAccountFull; //altera conta impactada apenas para pouança
+                        prefix = "Aplicação Poupança - ";
+                    } else {
+                        prefix = "Transferência on line - ";
+                    }
+                    break;
+                }
+                case 51: { //Saque poupança pela C/C
+                    //"Transferido da poupança - 19/08 3501      21038-2 MERCIA VIEIRA" --- PQP comprimento diferente da operação 60
+                    prefix = "Transferido da poupança - ";
+                    break;
+                }
+                default: {
+                    if (this.scheduledTransferRegister != null) {
+                        prefix = "Transferência Agendada - ";
+                    } else {
+                        prefix = null;
+                    }
+                }
+            }
         }
-        result = BBTransactionHelper.finalFilterMemo(result.trim());
+        if (prefix == null) {
+            if (this.operationCode == 0) { //Operação não tratada/mapeada
+                result = this.originalTransaction.getMemo();
+            } else {
+                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 87, 88, 89}; //Lista de operações bancarias ou saques
+                if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (this.variantCode == 0)) {
+                    result = this.originalTransaction.getMemo();
+                } else {
+                    throw new UnsupportedOperationException(
+                            String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
+                                    this.operationCode));
+                }
+            }
+        } else {
+            String dateStr = String.format("%1$02d/%2$02d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1);
+            prefix += dateStr;
+            result = prefix + " " + Strings.padEnd(this.getFakeTargetBranch(), 4, ' ')
+                    + " " + impactedAccountFull + " " + this.getFakeShortName(); //?? como pegar o complemento
+        }
         return result;
+    }
+
+    private String getFakeMemoByCellInfo(PreLoadCellInfo cellInfo) {
+        return "Telefone Pre-Pago - " + Integer.toString(cellInfo.getDDD()) + cellInfo.getFakeCellNumber() + " " + cellInfo.getFakeDescription();
     }
 
     public String getFakeTargetAccount() throws OFXException {
@@ -535,29 +549,34 @@ public class BBTransactionHelper {
         //todo confirmado apenas para transferencisa normais, para saque poupança e afins a montagem é diferente
         String result = null;
         if (this.preloadCellInfo == null) {
-            if (this.getFakeData() != null) {
-                String tempCode = String.format("%02d", this.operationCode);
-                String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-                String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-                String tempVariant = String.format("%02d", this.variantCode);
-                if (this.isInternalTransaction) {
-                    switch (this.operationCode) {
-                        case 0: {
-                            result = tempBranch + tempVariant + tempAccount;
-                            break;
+            if (this.scheduledTransferRegister != null) {
+                result = getFakeRefNumByScheduledTransfer(this.scheduledTransferRegister);
+            } else {
+
+                if (this.getFakeData() != null) {
+                    String tempCode = String.format("%02d", this.operationCode);
+                    String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                    String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                    String tempVariant = String.format("%02d", this.variantCode);
+                    if (this.isInternalTransaction) {
+                        switch (this.operationCode) {
+                            case 0: {
+                                result = tempBranch + tempVariant + tempAccount;
+                                break;
+                            }
+                            case 60: {
+                                result = tempCode + tempBranch + tempVariant + tempAccount;
+                                break;
+                            }
+                            default: {
+                                throw new OFXException(String.format("Código de operação(%d) não nulo para transferência interna", this.operationCode));
+                            }
                         }
-                        case 60: {
-                            result = tempCode + tempBranch + tempVariant + tempAccount;
-                            break;
-                        }
-                        default: {
-                            throw new OFXException(String.format("Código de operação(%d) não nulo para transferência interna", this.operationCode));
-                        }
+                    } else {
+                        result = tempCode + tempBranch + tempVariant + tempAccount;
                     }
-                } else {
-                    result = tempCode + tempBranch + tempVariant + tempAccount;
+                    result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
                 }
-                result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
             }
         } else {
             //numero do celular + 6 digitos finais do numero do cheknum
@@ -570,47 +589,34 @@ public class BBTransactionHelper {
     public String getFakeCheckNum() throws OFXException {
         String result = null;
         if (this.isInternalTransaction) {
-            switch (this.operationCode) {
-                case 0: {
-                    String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-                    String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-                    String tempVariant = String.format("%02d", this.variantCode);
-                    result = tempBranch.substring(1) + tempVariant + tempAccount;
-                    break;
-                }
-                case 60: {
-                    String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-                    String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-                    String tempVariant = String.format("%02d", this.variantCode);
-                    result = tempBranch.substring(1) + tempVariant + tempAccount;
-                    break;
-                }
-                default: {
-                    throw new OFXException("Erro montando CheckNum com dados atuais para operação interna");
-                }
-            }
+            result = getFakeCheckNumByInternalTransaction(result);
         } else {
             if (this.preloadCellInfo == null) {
-                switch (this.operationCode) {
-                    case 0:  //indeterminada
-                    case 10: //Restituição IRPF(mantem dados)
-                    case 80: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
-                    case 88: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
-                    case 89: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
-                    case 99: //pagto convênio(agua, luz, telefone)
-                    {
-                        return null;
-                    }
-                    default: {
-                        if ((this.targetBranch != null) && (this.targetAccount != null)) {
-                            if (this.getFakeData() != null) {
-                                String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
-                                String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
-                                String tempVariant = String.format("%02d", this.variantCode);
-                                result = tempBranch.substring(1) + tempVariant + tempAccount;
+                if (this.scheduledTransferRegister != null) {
+                    //100000021038
+                    result = this.getFakeTargetAccountDV() + "000" + Strings.padStart(this.getFakeTargetAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, '0');
+                } else {
+                    switch (this.operationCode) {
+                        case 0:  //indeterminada
+                        case 10: //Restituição IRPF(mantem dados)
+                        case 80: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                        case 88: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                        case 89: //Pacote de serviços(demais dados não mapeados e sempre se alteram)
+                        case 99: //pagto convênio(agua, luz, telefone)
+                        {
+                            return (String) null;
+                        }
+                        default: {
+                            if ((this.targetBranch != null) && (this.targetAccount != null)) {
+                                if (this.getFakeData() != null) {
+                                    String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                                    String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                                    String tempVariant = String.format("%02d", this.variantCode);
+                                    return tempBranch.substring(1) + tempVariant + tempAccount;
+                                }
+                            } else {
+                                return (String) null;
                             }
-                        } else {
-                            return null;
                         }
                     }
                 }
@@ -622,6 +628,29 @@ public class BBTransactionHelper {
                 } else {
                     throw new OFXException("CheckNum original incompatível com operação de recarga de celular.");
                 }
+            }
+        }
+        return result;
+    }
+
+    private String getFakeCheckNumByInternalTransaction(String result) throws OFXException {
+        switch (this.operationCode) {
+            case 0: {
+                String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                String tempVariant = String.format("%02d", this.variantCode);
+                result = tempBranch.substring(1) + tempVariant + tempAccount;
+                break;
+            }
+            case 60: {
+                String tempBranch = Strings.padStart(this.getFakeTargetBranch(), 4, '0');
+                String tempAccount = Strings.padStart(this.getFakeTargetAccount(), 7, '0');
+                String tempVariant = String.format("%02d", this.variantCode);
+                result = tempBranch.substring(1) + tempVariant + tempAccount;
+                break;
+            }
+            default: {
+                throw new OFXException("Erro montando CheckNum com dados atuais para operação interna");
             }
         }
         return result;
@@ -699,6 +728,15 @@ public class BBTransactionHelper {
             }
         }
         return false;
+    }
+
+    private String getFakeRefNumByScheduledTransfer(FakeRegister schdFakeReg) {
+        String result = Strings.padStart(schdFakeReg.getFakeBranch(), 4, '0')
+                + schdFakeReg.getFakeBranchVD()
+                + "000" //TODO: Composição ainda incerta
+                + Strings.padStart(schdFakeReg.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, '0'); //350.100.000.021.038
+        result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
+        return result;
     }
 
 }
