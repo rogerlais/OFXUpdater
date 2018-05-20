@@ -241,6 +241,7 @@ public class BBTransactionHelper {
                     case 22:  //transferência online recebimento/crédito(mais uma)
                     case 51:
                     case 52:  //transferência online entre contas
+                    case 55:  //transferência online entre contas(oriundas do exterior)
                     case 60: {  //Transferência online
                         this.setTargetAccount(GlobalConfig.trimChar(chkNum.substring(chkNum.length() - GlobalConfig.ACCOUNT_BB_LENGTH), '0'));
                         this.setTargetAccountDV(getModulo11(this.getTargetAccount()));

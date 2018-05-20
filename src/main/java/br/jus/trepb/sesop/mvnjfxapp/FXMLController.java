@@ -128,7 +128,7 @@ public class FXMLController implements Initializable {
                 OFXCreditCardBilling ccBill = new OFXCreditCardBilling(filename);
                 ccBill.read();
                 //Object obj = this.edtCreditCardTresholdDay.getValue();
-                ccBill.writeTo("C:\\temp\\out.ofx");
+                //ccBill.writeTo("C:\\temp\\out.ofx");
                 int deltaDays = -1 * this.edtCreditCardTresholdDay.getValueFactory().getValue();
                 ccBill.exportTo(ccBill.getDefaultExportFilename(), deltaDays);
             }
