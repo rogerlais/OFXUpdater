@@ -86,6 +86,7 @@ public class BBTransactionHelper {
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988806954", "999999906", "MV-OI-PB(desativado)", "PATROA(DESATIVADO)-OI-PB"));
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996089270", "999999907", "Radler-TIM-PE", "MACGYVER-TIM-PE"));
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "999273714", "999999908", "Millenna-TIM-PB", "CABECUDA-TIM-PB"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996525437", "999999909", "Vo Maria-TIM-PE", "V-MARIA-TIM-PE"));
     }
 
     static public void loadMemoDictionary() {
@@ -289,6 +290,10 @@ public class BBTransactionHelper {
                 break;
             }
             default: {
+                if (this.getIsTEDOperation()) {
+                    FXMLController.showAlert("Aviso:", "Encontrado TED, potencialmente irrelevante, não mapeada:\n\r"
+                            + "Número do cheque = " + this.originalTransaction.getCheckNumber());
+                }
                 this.operationCode = 0;  //anula unica não nula anteriormente
             }
         } //end switch para tamanho do código informado por refnum
@@ -420,7 +425,7 @@ public class BBTransactionHelper {
             FakeRegister fData = this.getFakeData();
             if (fData == null) {  //Sem registro de mapeamento(isso pode ser perigoso)
                 result = this.originalTransaction.getMemo();
-                FXMLController.showAlert("Aviso:", "Encontrada operação não mapeada:\n\r" + result);
+                FXMLController.showAlert("Aviso:", "Encontrada operação, potencialmente irrelevante, não mapeada:\n\r" + result);
             } else {
                 result = getFakeMemoByFakeData(fData, result);
             }
@@ -738,6 +743,15 @@ public class BBTransactionHelper {
                 + Strings.padStart(schdFakeReg.getFakeAccount(), GlobalConfig.ACCOUNT_BB_LENGTH, '0'); //350.100.000.021.038
         result = BBDigitVerifier.regularTokenizer(result, ".", 3, false);
         return result;
+    }
+
+    private boolean getIsTEDOperation() {
+        String refStr = this.originalTransaction.getReferenceNumber().replace(".", "");
+        if (this.originalTransaction.getCheckNumber().endsWith(refStr)) {
+            return this.originalTransaction.getMemo().startsWith("TED");
+        } else {
+            return false;
+        }
     }
 
 }
