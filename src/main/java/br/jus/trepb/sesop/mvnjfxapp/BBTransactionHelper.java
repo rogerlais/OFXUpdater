@@ -6,6 +6,7 @@ package br.jus.trepb.sesop.mvnjfxapp;
 import com.google.common.base.Strings;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -170,7 +171,7 @@ public class BBTransactionHelper {
                 this.operationCode = 0;
                 //TODO: throw new OFXException("Operação não tratada ainda");
             } else {
-                transferAdjust(refNum, chkNum, sourceAccount);
+                transferAdjust(refNum, chkNum, sourceAccount);  //!parada para caso de tarifa de servico
             }
         }
     }
@@ -259,6 +260,15 @@ public class BBTransactionHelper {
                         }
                         break;
                     }
+                    case 85: { //Tarifa sobre servico avulso
+                        this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
+                        //Comparação feita com magic number  DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
+                        Integer[] temporalCodes = new Integer[]{20, 80};  //pode também incluir 20 = debitado imediatamente, 80 = posteriormente
+                        if (!Arrays.asList(temporalCodes).contains(this.variantCode)) {
+                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
+                        }
+                        break;
+                    }
                     case 10: //restituição IRPF
                     case 99: {  //pagamento de convenio(agua, luz, telefone, etc)
                         break;
@@ -305,7 +315,8 @@ public class BBTransactionHelper {
         <REFNUM>350.100.000.021.038</REFNUM>
         <MEMO>Transferência Agendada - 25/12 3501      21038-2 MERCIA VIEIRA</MEMO>
          */
-        String branchByRefNum = GlobalConfig.trimChar(refNum.substring(0, 5).replace(".", ""), '0');
+        int refLimit = Integer.min(5, refNum.length());  //por aparecimento de valor muito curto em TED falho
+        String branchByRefNum = GlobalConfig.trimChar(refNum.substring(0, refLimit).replace(".", ""), '0');
         String accountByCheckNum = GlobalConfig.trimChar(chkNum.substring(6, 12), '0');
         for (FakeRegister reg : this.fakeList) {
             if (reg.getTrueBranch().equals(branchByRefNum) & reg.getTrueAccount().equals(accountByCheckNum)) {
@@ -492,8 +503,9 @@ public class BBTransactionHelper {
             if (this.operationCode == 0) { //Operação não tratada/mapeada
                 result = this.originalTransaction.getMemo();
             } else {
-                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 87, 88, 89}; //Lista de operações bancarias ou saques
-                if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (this.variantCode == 0)) {
+                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 85, 87, 88, 89}; //Lista de operações bancarias ou saques
+                Integer[] TEMPORAL_CODES = new Integer[]{0, 20, 80}; //VariantCodes(0 = debito para cedente, 20 = debito imediato para banco, 80 = débito posterior)
+                if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (Arrays.asList(TEMPORAL_CODES).contains(this.variantCode))) {
                     result = this.originalTransaction.getMemo();
                 } else {
                     throw new UnsupportedOperationException(
