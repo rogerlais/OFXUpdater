@@ -87,7 +87,7 @@ public class BBTransactionHelper {
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988806954", "999999906", "MV-OI-PB(desativado)", "PATROA(DESATIVADO)-OI-PB"));
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996089270", "999999907", "Radler-TIM-PE", "MACGYVER-TIM-PE"));
         preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "999273714", "999999908", "Millenna-TIM-PB", "CABECUDA-TIM-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996525437", "999999909", "Vo Maria-TIM-PE", "V-MARIA-TIM-PE"));
+        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996987414", "999999909", "Vo Maria-TIM-PE", "V-MARIA-TIM-PE"));
     }
 
     static public void loadMemoDictionary() {
@@ -241,6 +241,7 @@ public class BBTransactionHelper {
                 this.operationCode = Integer.parseInt(refNum.substring(0, 2));
                 switch (this.operationCode) {
                     case 22:  //transferência online recebimento/crédito(mais uma)
+                    case 33: //transf. agendada entre cpfs distintos
                     case 51:
                     case 52:  //transferência online entre contas
                     case 55:  //transferência online entre contas(oriundas do exterior)
