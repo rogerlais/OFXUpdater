@@ -265,7 +265,8 @@ public class BBTransactionHelper {
                     case 85: { //Tarifa sobre servico avulso
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         //Comparação feita com magic number  DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
-                        Integer[] temporalCodes = new Integer[]{20, 80};  //pode também incluir 20 = debitado imediatamente, 80 = posteriormente
+                        //pode também incluir 20 = debitado imediatamente, 80 = posteriormente e para pagamento de CDC 0 = ???Desconhecido
+                        Integer[] temporalCodes = new Integer[]{0, 20, 80};
                         if (!Arrays.asList(temporalCodes).contains(this.variantCode)) {
                             throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
                         }
