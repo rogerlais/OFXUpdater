@@ -242,6 +242,7 @@ public class BBTransactionHelper {
                 switch (this.operationCode) {
                     case 22:  //transferência online recebimento/crédito(mais uma)
                     case 33: //transf. agendada entre cpfs distintos
+                    case 48: //Depósito em envelope ou por TAA
                     case 51:
                     case 52:  //transferência online entre contas
                     case 55:  //transferência online entre contas(oriundas do exterior)
@@ -262,7 +263,8 @@ public class BBTransactionHelper {
                         break;
                     }
                     case 82: //tarifa sobre transferência além do pacote da franquia
-                    case 85: { //Tarifa sobre servico avulso
+                    case 85: //Tarifa sobre servico avulso
+                    case 86: { //Pagto de financiamento com o banco
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         //Comparação feita com magic number  DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
                         //pode também incluir 20 = debitado imediatamente, 80 = posteriormente e para pagamento de CDC 0 = ???Desconhecido
@@ -506,7 +508,7 @@ public class BBTransactionHelper {
             if (this.operationCode == 0) { //Operação não tratada/mapeada
                 result = this.originalTransaction.getMemo();
             } else {
-                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 82, 85, 87, 88, 89}; //Lista de operações bancarias ou saques
+                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 82, 85, 86, 87, 88, 89}; //Lista de operações bancarias ou saques
                 Integer[] TEMPORAL_CODES = new Integer[]{0, 20, 80}; //VariantCodes(0 = debito para cedente, 20 = debito imediato para banco, 80 = débito posterior)
                 if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (Arrays.asList(TEMPORAL_CODES).contains(this.variantCode))) {
                     result = this.originalTransaction.getMemo();
