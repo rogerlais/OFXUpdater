@@ -54,7 +54,7 @@ public class BBTransactionHelper {
         } else {
             FakeRegister result = null;
             if (this.targetBranch != null) {
-                for (FakeRegister reg : fakeList) {
+                for (FakeRegister reg : FAKELIST) {
                     if ( // test all attrs
                             Integer.parseInt(this.targetBranch) == Integer.parseInt(reg.getTrueBranch()) //branch
                             & Integer.parseInt(this.targetAccount) == Integer.parseInt(reg.getTrueAccount())) //account
@@ -71,50 +71,50 @@ public class BBTransactionHelper {
         }
     }
 
-    private static final List<FakeRegister> fakeList = new ArrayList<FakeRegister>();
+    private static final List<FakeRegister> FAKELIST = new ArrayList<FakeRegister>();
 
-    private static final Map<String, String> memoDictionary = new HashMap<String, String>();
+    private static final Map<String, String> MEMO_DICTIONARY = new HashMap<String, String>();
 
-    private static final List<PreLoadCellInfo> preLoadCellPhonesNumbers = new ArrayList<PreLoadCellInfo>();
+    private static final List<PreLoadCellInfo> PRELOADED_CELLPHONESNUMBERS = new ArrayList<PreLoadCellInfo>();
 
     static public void loadPreLoadedCellPhones() {
-        preLoadCellPhonesNumbers.clear();
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "996909016", "999999901", "Roger-TIM-PB", "ARUAH-TIM-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "996880930", "999999902", "MV-TIM-PB", "PATROA-TIM-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988035232", "999999903", "MV-OI-PB(das antigas)", "MV(ANTIGO)-OI-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "997636329", "999999904", "Apolo-TIM-PE", "MISTER-M-TIM-PE"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "998638007", "999999905", "Lucas-TIM-PB", "FERIAS-TIM-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "988806954", "999999906", "MV-OI-PB(desativado)", "PATROA(DESATIVADO)-OI-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996089270", "999999907", "Radler-TIM-PE", "MACGYVER-TIM-PE"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(83, "999273714", "999999908", "Millenna-TIM-PB", "CABECUDA-TIM-PB"));
-        preLoadCellPhonesNumbers.add(new PreLoadCellInfo(81, "996987414", "999999909", "Vo Maria-TIM-PE", "V-MARIA-TIM-PE"));
+        PRELOADED_CELLPHONESNUMBERS.clear();
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "996909016", "999999901", "Roger-TIM-PB", "ARUAH-TIM-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "996880930", "999999902", "MV-TIM-PB", "PATROA-TIM-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "988035232", "999999903", "MV-OI-PB(das antigas)", "MV(ANTIGO)-OI-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(81, "997636329", "999999904", "Apolo-TIM-PE", "MISTER-M-TIM-PE"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "998638007", "999999905", "Lucas-TIM-PB", "FERIAS-TIM-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "988806954", "999999906", "MV-OI-PB(desativado)", "PATROA(DESATIVADO)-OI-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(81, "996089270", "999999907", "Radler-TIM-PE", "MACGYVER-TIM-PE"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(83, "999273714", "999999908", "Millenna-TIM-PB", "CABECUDA-TIM-PB"));
+        PRELOADED_CELLPHONESNUMBERS.add(new PreLoadCellInfo(81, "996987414", "999999909", "Vo Maria-TIM-PE", "V-MARIA-TIM-PE"));
     }
 
     static public void loadMemoDictionary() {
-        memoDictionary.clear();
+        MEMO_DICTIONARY.clear();
         //pagador da merreca
-        memoDictionary.put("SOP-TRE", "SOP-SENZALA");
-        memoDictionary.put("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO"); //[1] - Sempre antes de (2)
-        memoDictionary.put("Recebimento de Proventos", "Recebimento de Merreca");
+        MEMO_DICTIONARY.put("SOP-TRE", "SOP-SENZALA");
+        MEMO_DICTIONARY.put("TRIBUNAL REGIONAL ELEITORAL DA PARA", "ESTABULO"); //[1] - Sempre antes de (2)
+        MEMO_DICTIONARY.put("Recebimento de Proventos", "Recebimento de Merreca");
         //Apolo
-        memoDictionary.put("81997636329", "(MISTER-M)");
+        MEMO_DICTIONARY.put("81997636329", "(MISTER-M)");
         //Roger
-        memoDictionary.put("83996909016", "(CELULAR MANE)");
+        MEMO_DICTIONARY.put("83996909016", "(CELULAR MANE)");
         //Patroa
-        memoDictionary.put("83996880930", "(CELULAR PATROA)");
+        MEMO_DICTIONARY.put("83996880930", "(CELULAR PATROA)");
         //Perguntar a patroa
-        memoDictionary.put("83998638007", "(ETERNAS.FERIAS)");
+        MEMO_DICTIONARY.put("83998638007", "(ETERNAS.FERIAS)");
         //ordem bancária(diárias e afins)
-        memoDictionary.put("Ordem Banc 12 Sec Tes Nac", "Ajuda de custo");
-        memoDictionary.put("060177980001-60", "(CNPJ-Senzala)");
-        memoDictionary.put("TRIBUNAL REGIONAL ELEI", "(Senzala)"); //[2] - Sempre depois de (1)
+        MEMO_DICTIONARY.put("Ordem Banc 12 Sec Tes Nac", "Ajuda de custo");
+        MEMO_DICTIONARY.put("060177980001-60", "(CNPJ-Senzala)");
+        MEMO_DICTIONARY.put("TRIBUNAL REGIONAL ELEI", "(Senzala)"); //[2] - Sempre depois de (1)
     }
 
     static public void loadFakeList() {
-        fakeList.clear();
+        FAKELIST.clear();
         //todo: Buscar ler dados de arquivo de configuração
         //Fumo (Neco Biu Junior)
-        fakeList.add(
+        FAKELIST.add(
                 new FakeRegister(
                         GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_BRANCH_DV, GlobalConfig.OLD_MASTER_ACCOUNT,
                         GlobalConfig.OLD_MASTER_ACCOUNT_DV, "ROGERLAIS ANDR", GlobalConfig.NEW_MASTER_BRANCH,
@@ -122,7 +122,7 @@ public class BBTransactionHelper {
                         GlobalConfig.MASTER_ACCOUNT_ALIAS, GlobalConfig.MASTER_CASH_OUT_ACCOUNT, "master")
         );
         //MV
-        fakeList.add(
+        FAKELIST.add(
                 new FakeRegister(
                         GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_BRANCH_DV, GlobalConfig.OLD_SLAVE_ACCOUNT,
                         GlobalConfig.OLD_SLAVE_ACCOUNT_DV, "MERCIA VIEIRA", GlobalConfig.NEW_SLAVE_BRANCH,
@@ -130,18 +130,18 @@ public class BBTransactionHelper {
                         GlobalConfig.SLAVE_ACCOUNT_ALIAS, GlobalConfig.SLAVE_CASH_OUT_ACCOUNT, "slave")
         );
         //Pai
-        fakeList.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO",
+        FAKELIST.add(new FakeRegister("1138", "X", "2560", "7", "MANOEL S DA SI", "3221", "2", "1257", "2", "CONTA OLIMPO",
                 null, "PAI(DOACAO UNIVERSAL - Aleluia!)"));
         //Irmã
-        fakeList.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS",
+        FAKELIST.add(new FakeRegister("1138", "X", "17235", "9", "FABIANA ANDRAD", "3221", "2", "489520", "7", "CONTA PEGASUS",
                 null, "Fabiana(Instituto cancer Dr. Arnaldo"));
 
         //Zé Antonio(BSB)
-        fakeList.add(new FakeRegister("1312", "X", "5248758", "x", "JOSE ANTONIO C", "1512", "1", "7107", "2", "FUGIU DE SARNEY",
+        FAKELIST.add(new FakeRegister("1312", "X", "5248758", "x", "JOSE ANTONIO C", "1512", "1", "7107", "2", "FUGIU DE SARNEY",
                 null, "co-cunhado(Igreja mundial poder de deus"));
 
         //Irmã Márcia(BSB)
-        fakeList.add(new FakeRegister("3380", "X", "20245", "2", "MARCIA VIEIRA", "1614", "4", "170000", "6", "PARAIBA MASCULINA",
+        FAKELIST.add(new FakeRegister("3380", "X", "20245", "2", "MARCIA VIEIRA", "1614", "4", "170000", "6", "PARAIBA MASCULINA",
                 null, "CUNHADA(lagoinha.com/dizimos)"));
     }
 
@@ -323,7 +323,7 @@ public class BBTransactionHelper {
         int refLimit = Integer.min(5, refNum.length());  //por aparecimento de valor muito curto em TED falho
         String branchByRefNum = GlobalConfig.trimChar(refNum.substring(0, refLimit).replace(".", ""), '0');
         String accountByCheckNum = GlobalConfig.trimChar(chkNum.substring(6, 12), '0');
-        for (FakeRegister reg : this.fakeList) {
+        for (FakeRegister reg : this.FAKELIST) {
             if (reg.getTrueBranch().equals(branchByRefNum) & reg.getTrueAccount().equals(accountByCheckNum)) {
                 return reg;
             }
@@ -698,9 +698,9 @@ public class BBTransactionHelper {
         //TODO: caso a ser resolvido  "Ordem Banc 12 Sec Tes Nac - 060177980001-60 TRIBUNAL REGIONAL ELEI"
         //infelizmente para contemplar casos como acima temos de varrer toda a lista sempre
         String result = memo;
-        for (String key : memoDictionary.keySet()) {
+        for (String key : MEMO_DICTIONARY.keySet()) {
             if (result.contains(key)) {
-                String value = memoDictionary.get(key);
+                String value = MEMO_DICTIONARY.get(key);
                 result = result.replace(key, value);
             }
         }
@@ -712,7 +712,7 @@ public class BBTransactionHelper {
         String lookupPhone = refNum.replace(".", "");  //remove os pontos
         if (lookupPhone.length() >= 9) {
             lookupPhone = lookupPhone.substring(0, 9);  //assume-se sempre 9 digitos a partir de agora
-            for (PreLoadCellInfo cellPhone : preLoadCellPhonesNumbers) {
+            for (PreLoadCellInfo cellPhone : PRELOADED_CELLPHONESNUMBERS) {
                 if (cellPhone.getCellNumber().equals(lookupPhone)) {
                     result = cellPhone;
                     break;
