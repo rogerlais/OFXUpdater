@@ -35,7 +35,7 @@ public class BBDigitVerifier {
             if (i < x) {
                 cycleSum += Integer.parseInt((pesoBB.substring(i, i + 1))) * 0;
             } else {
-                cycleSum += Integer.parseInt((pesoBB.substring(i, i + 1))) * Integer.parseInt(branchId.substring(i, i + 1).toString());
+                cycleSum += Integer.parseInt((pesoBB.substring(i, i + 1))) * Integer.parseInt(branchId.substring(i, i + 1));
             }
         }
 

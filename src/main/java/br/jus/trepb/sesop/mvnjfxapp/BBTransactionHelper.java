@@ -253,6 +253,7 @@ public class BBTransactionHelper {
                         break;
                     }
                     case 80:
+                    case 84: //Empréstimo eletrônico
                     case 87:
                     case 88:
                     case 89: {  //pacote de serviços(demais dados não mapeados e sempre se alteram)
@@ -263,12 +264,16 @@ public class BBTransactionHelper {
                         break;
                     }
                     case 82: //tarifa sobre transferência além do pacote da franquia
+                    case 83: //Depósito em boca de caixa
                     case 85: //Tarifa sobre servico avulso
                     case 86: { //Pagto de financiamento com o banco
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         //Comparação feita com magic number  DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
-                        //pode também incluir 20 = debitado imediatamente, 80 = posteriormente e para pagamento de CDC 0 = ???Desconhecido
-                        Integer[] temporalCodes = new Integer[]{0, 20, 80};
+                        //pode também incluir:
+                        //Boca de caixa(apenas MV)
+                        //20 = debitado imediatamente, 
+                        //80 = posteriormente e para pagamento de CDC 0 = ???Desconhecido
+                        Integer[] temporalCodes = new Integer[]{0, 15, 20, 80};
                         if (!Arrays.asList(temporalCodes).contains(this.variantCode)) {
                             throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
                         }
@@ -323,7 +328,7 @@ public class BBTransactionHelper {
         int refLimit = Integer.min(5, refNum.length());  //por aparecimento de valor muito curto em TED falho
         String branchByRefNum = GlobalConfig.trimChar(refNum.substring(0, refLimit).replace(".", ""), '0');
         String accountByCheckNum = GlobalConfig.trimChar(chkNum.substring(6, 12), '0');
-        for (FakeRegister reg : this.FAKELIST) {
+        for (FakeRegister reg : BBTransactionHelper.FAKELIST) {
             if (reg.getTrueBranch().equals(branchByRefNum) & reg.getTrueAccount().equals(accountByCheckNum)) {
                 return reg;
             }
@@ -508,8 +513,8 @@ public class BBTransactionHelper {
             if (this.operationCode == 0) { //Operação não tratada/mapeada
                 result = this.originalTransaction.getMemo();
             } else {
-                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 82, 85, 86, 87, 88, 89}; //Lista de operações bancarias ou saques
-                Integer[] TEMPORAL_CODES = new Integer[]{0, 20, 80}; //VariantCodes(0 = debito para cedente, 20 = debito imediato para banco, 80 = débito posterior)
+                Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 82, 83, 84, 85, 86, 87, 88, 89}; //Lista de operações bancarias ou saques
+                Integer[] TEMPORAL_CODES = new Integer[]{0, 15, 20, 80}; //VariantCodes(0 = debito para cedente, 15 = Boca caixa, 20 = debito imediato para banco, 80 = débito posterior)
                 if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (Arrays.asList(TEMPORAL_CODES).contains(this.variantCode))) {
                     result = this.originalTransaction.getMemo();
                 } else {
