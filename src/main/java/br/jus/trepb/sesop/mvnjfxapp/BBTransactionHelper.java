@@ -48,7 +48,7 @@ public class BBTransactionHelper {
     private final Transaction originalTransaction;
     private boolean isInternalTransaction;
 
-    protected FakeRegister getFakeData() throws OFXException {
+    private FakeRegister getFakeData() throws OFXException {
         if (this.fakeData != null) {
             return this.fakeData;
         } else {
@@ -161,7 +161,7 @@ public class BBTransactionHelper {
         if (chkNum.endsWith(sourceAccount)) { //transação interna c/c <-> poupança ou saque da conta
             this.selfTransferAdjust(refNum, chkNum, sourceAccount);
         } else {
-            if ((this.preloadCellInfo != null) //recarga de celular
+            if ((null != this.preloadCellInfo) //recarga de celular
                     //|| //ou
                     //chkNum.endsWith(sourceAccount) //age sobre própria conta
                     || //Movimentação interna vinculada a mesma conta

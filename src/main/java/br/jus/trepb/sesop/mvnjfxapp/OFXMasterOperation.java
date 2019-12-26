@@ -286,7 +286,7 @@ public final class OFXMasterOperation {
                     transCount++;
                     this.updateTransaction(slaveTrans, GlobalConfig.OLD_SLAVE_BRANCH, GlobalConfig.OLD_SLAVE_ACCOUNT);
                 }
-            } catch (Exception e) {
+            } catch (OFXException e) {
                 throw new OFXException(String.format("T=%d - %s", transCount, e.getMessage()));
             }
             this.slave.writeTo(this.slave.getStdOutputFilename()); //Salva os novos arquivos com as alterações

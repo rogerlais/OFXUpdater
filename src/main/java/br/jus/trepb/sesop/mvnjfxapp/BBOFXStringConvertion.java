@@ -7,11 +7,6 @@ package br.jus.trepb.sesop.mvnjfxapp;
 
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 import java.sql.Time;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -22,7 +17,7 @@ import java.util.TimeZone;
  */
 public class BBOFXStringConvertion extends DefaultStringConversion {
 
-    private TimeZone LocalTimeZone = TimeZone.getTimeZone("BRT");
+    private final TimeZone LocalTimeZone = TimeZone.getTimeZone("BRT");
 
     @Override
     protected String formatTime(Time time) {
