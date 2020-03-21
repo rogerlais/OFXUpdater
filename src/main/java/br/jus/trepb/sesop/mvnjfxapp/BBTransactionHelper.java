@@ -252,7 +252,17 @@ public class BBTransactionHelper {
                         this.setTargetBranch(refNum.substring(2, 7).replace(".", ""));  //pega 5 e exclui o ponto
                         break;
                     }
-                    case 80:
+                    case 80: //Cobrança/Tarifa sde serviço
+                        //Comparação feita com magic number DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
+                        //pode também incluir:
+                        //Boca de caixa(apenas MV)
+                        //20 = debitado imediatamente, TED/DOC
+                        this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
+                        Integer[] feeCodes = new Integer[]{0, 20};
+                        if (!Arrays.asList(feeCodes).contains(this.variantCode)) {
+                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
+                        }
+                        break;
                     case 84: //Empréstimo eletrônico
                     case 87:
                     case 88:
