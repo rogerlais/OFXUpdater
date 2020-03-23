@@ -9,9 +9,11 @@ package br.jus.trepb.sesop.mvnjfxapp;
  *
  * @author roger
  */
-public class OFXException extends Exception {
+public class OFXException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
+
+    private BBTransactionHelper transaction;
 
     /**
      * Only to silent hints
@@ -22,4 +24,22 @@ public class OFXException extends Exception {
         super(message);
     }
 
+    public OFXException(BBTransactionHelper transaction, String message) {
+        super(message);
+        this.transaction = transaction;
+    }
+
+    @Override
+    public String getMessage() {
+        String msg;
+        if (this.transaction != null) {
+            msg = super.getMessage() + 
+                    "\r\nRefNum=" + this.transaction.getRefNum() + 
+                    "\r\nCheckum=" + this.transaction.getCheckNum() + 
+                    "\r\nOriginal Memo=" + this.transaction.getOriginalMemo();
+        } else {
+            msg = super.getMessage();
+        }
+        return msg;
+    }
 }

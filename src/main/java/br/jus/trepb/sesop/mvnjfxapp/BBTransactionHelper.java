@@ -64,7 +64,7 @@ public class BBTransactionHelper {
                     }
                 }
             } else {
-                throw new OFXException("Chave(agência/conta) não encontrada na lista de substituições!");
+                throw new OFXException(this, "Chave(agência/conta) não encontrada na lista de substituições!");
             }
             this.fakeData = result;
             return this.fakeData;
@@ -206,7 +206,7 @@ public class BBTransactionHelper {
                     case 89: {  //pacote de serviços(demais dados não mapeaados e sempre se alteram)
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         if (this.variantCode != 0) {
-                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
+                            throw new OFXException(this, String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
                         }
                         break;
                     }
@@ -222,7 +222,8 @@ public class BBTransactionHelper {
                                 chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
                             break;
                         } else {
-                            throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                            throw new OFXException(this,
+                                    String.format("Código de operação(%d) não suportado.", this.operationCode));
                         }
                     }
                 }
@@ -231,6 +232,14 @@ public class BBTransactionHelper {
             default: {
                 this.operationCode = 0;  //anula unica não nula anteriormente
             }
+        }
+    }
+
+    private void checkFeeCodes(String chkNum, Integer[] feeCodes) {
+        this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
+        if (!Arrays.asList(feeCodes).contains(this.variantCode)) {
+            throw new OFXException(this,
+                    String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
         }
     }
 
@@ -257,19 +266,19 @@ public class BBTransactionHelper {
                         //pode também incluir:
                         //Boca de caixa(apenas MV)
                         //20 = debitado imediatamente, TED/DOC
-                        this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
-                        Integer[] feeCodes = new Integer[]{0, 20};
-                        if (!Arrays.asList(feeCodes).contains(this.variantCode)) {
-                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
-                        }
+                        this.checkFeeCodes(chkNum, new Integer[]{0, 20});
                         break;
                     case 84: //Empréstimo eletrônico
                     case 87:
+                        //Comparação feita com magic number para cobrança de pacote de serviços 
+                        //90 = debitado imediatamente, TED/DOC
+                        this.checkFeeCodes(chkNum, new Integer[]{0, 90});
+                        break;
                     case 88:
                     case 89: {  //pacote de serviços(demais dados não mapeados e sempre se alteram)
                         this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         if (this.variantCode != 0) {
-                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
+                            throw new OFXException(this, String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
                         }
                         break;
                     }
@@ -277,16 +286,12 @@ public class BBTransactionHelper {
                     case 83: //Depósito em boca de caixa
                     case 85: //Tarifa sobre servico avulso
                     case 86: { //Pagto de financiamento com o banco
-                        this.setVariantCode(Integer.parseInt(chkNum.substring(3, 5)));
                         //Comparação feita com magic number  DOC Eletronico observado até agora apenas para MV e sem saldo para débito imediato qdo passou do limite mensal
                         //pode também incluir:
                         //Boca de caixa(apenas MV)
                         //20 = debitado imediatamente, 
                         //80 = posteriormente e para pagamento de CDC 0 = ???Desconhecido
-                        Integer[] temporalCodes = new Integer[]{0, 15, 20, 80};
-                        if (!Arrays.asList(temporalCodes).contains(this.variantCode)) {
-                            throw new OFXException(String.format("Variação da operação(%d) incompatível com seu código(%d)", this.operationCode, this.variantCode));
-                        }
+                        this.checkFeeCodes(chkNum, new Integer[]{0, 15, 20, 80});
                         break;
                     }
                     case 10: //restituição IRPF
@@ -311,7 +316,7 @@ public class BBTransactionHelper {
                                     chkNum.endsWith(this.getFakeData().getCashOutAccount())))) {
                                 break;
                             } else {
-                                throw new OFXException(String.format("Código de operação(%d) não suportado.", this.operationCode));
+                                throw new OFXException(this, String.format("Código de operação(%d) não suportado.", this.operationCode));
                             }
 
                         }
@@ -361,7 +366,7 @@ public class BBTransactionHelper {
      */
     public void setTargetBranch(String targetBranch) throws OFXException {
         if (targetBranch.length() > 4) {
-            throw new OFXException("Digitos da identificação da agência com comprimento superior ao máximo possível");
+            throw new OFXException(this, "Digitos da identificação da agência com comprimento superior ao máximo possível");
         }
         this.fakeData = null;
         this.targetBranch = targetBranch;
@@ -394,6 +399,10 @@ public class BBTransactionHelper {
      */
     public void setVariantCode(int variantCode) {
         this.variantCode = variantCode;
+    }
+
+    public String getOriginalMemo() {
+        return this.originalTransaction.getMemo();
     }
 
     /**
@@ -523,12 +532,17 @@ public class BBTransactionHelper {
             if (this.operationCode == 0) { //Operação não tratada/mapeada
                 result = this.originalTransaction.getMemo();
             } else {
+                //todo: Colocar tais lisas de operações e coógos(temporais e tarifarias) como lista de classes 
                 Integer[] BANK_OPERATION_CODES = new Integer[]{10, 80, 82, 83, 84, 85, 86, 87, 88, 89}; //Lista de operações bancarias ou saques
-                Integer[] TEMPORAL_CODES = new Integer[]{0, 15, 20, 80}; //VariantCodes(0 = debito para cedente, 15 = Boca caixa, 20 = debito imediato para banco, 80 = débito posterior)
-                if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && (Arrays.asList(TEMPORAL_CODES).contains(this.variantCode))) {
+                //VariantCodes:
+                //(0 = debito para cedente, 15 = Boca caixa, 
+                // 20 = debito imediato para banco, 80 = débito posterior, 90 = debito para referencia)
+                Integer[] TEMPORAL_CODES = new Integer[]{0, 15, 20, 80, 90}; 
+                if (BBTransactionHelper.contains(BANK_OPERATION_CODES, this.operationCode) && 
+                        (Arrays.asList(TEMPORAL_CODES).contains(this.variantCode))) {
                     result = this.originalTransaction.getMemo();
                 } else {
-                    throw new UnsupportedOperationException(
+                    throw new OFXException( this, 
                             String.format("Código da operação (%d) não suportado para a geração de informação textual da transação.",
                                     this.operationCode));
                 }
@@ -607,7 +621,7 @@ public class BBTransactionHelper {
                                 break;
                             }
                             default: {
-                                throw new OFXException(String.format("Código de operação(%d) não nulo para transferência interna", this.operationCode));
+                                throw new OFXException(this, String.format("Código de operação(%d) não nulo para transferência interna", this.operationCode));
                             }
                         }
                     } else {
@@ -664,7 +678,7 @@ public class BBTransactionHelper {
                 if (oldCheckNum.length() > 11) {
                     result = this.preloadCellInfo.getFakeCellNumber().substring(3, 9) + oldCheckNum.substring(6, 12);
                 } else {
-                    throw new OFXException("CheckNum original incompatível com operação de recarga de celular.");
+                    throw new OFXException(this, "CheckNum original incompatível com operação de recarga de celular.");
                 }
             }
         }
@@ -688,7 +702,7 @@ public class BBTransactionHelper {
                 break;
             }
             default: {
-                throw new OFXException("Erro montando CheckNum com dados atuais para operação interna");
+                throw new OFXException(this, "Erro montando CheckNum com dados atuais para operação interna");
             }
         }
         return result;

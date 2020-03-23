@@ -261,13 +261,9 @@ public final class OFXMasterOperation {
             //Enumera e trata todas as transações da conta master
             List<Transaction> mTL = this.master.getTransactionList();
             transCount = 0;
-            try {
-                for (Transaction masterTransaction : mTL) {
-                    transCount++;
-                    this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
-                }
-            } catch (Exception e) {
-                throw new OFXException(String.format("T=%d - %s", transCount, e.getMessage()));
+            for (Transaction masterTransaction : mTL) {
+                transCount++;
+                this.updateTransaction(masterTransaction, GlobalConfig.OLD_MASTER_BRANCH, GlobalConfig.OLD_MASTER_ACCOUNT);
             }
             this.master.writeTo(this.master.getStdOutputFilename()); //Salva os novos arquivos com as alterações
         }
