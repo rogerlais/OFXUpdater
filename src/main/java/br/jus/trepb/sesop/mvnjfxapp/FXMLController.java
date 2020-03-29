@@ -10,13 +10,18 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 public class FXMLController implements Initializable {
 
+    @FXML
+    private AnchorPane AnchorPane;
     @FXML
     private TextField edtMasterOFX;
     @FXML
@@ -34,10 +39,13 @@ public class FXMLController implements Initializable {
     @FXML
     private Button btnCancel;
     @FXML
-    private String lastUsedDir;
-
+    private CheckBox chkBoxIgnoreAutoInvestments;
     @FXML
     private Spinner<Integer> edtCreditCardTresholdDay;
+    @FXML
+    private Label label;
+
+    private String lastUsedDir;
 
     @FXML
     private void handleButtonCancel(ActionEvent event) {
@@ -74,6 +82,7 @@ public class FXMLController implements Initializable {
         } else {
             this.lastUsedDir = System.getProperty("user.dir");
         }
+        //this.chkBoxIgnoreAutoInvestments.setSelected(true); //apenas para teste de inicialização
     }
 
     private String choiceFilename() {
@@ -120,7 +129,8 @@ public class FXMLController implements Initializable {
 
             //Gera arquivos fake
             OFXMasterOperation controller = new OFXMasterOperation(masterOFX, slaveOFX);
-            controller.saveUpdatedOFX();  //altera os valores reais pelos fakes e salva com sufixo
+            boolean ignoreAutoInvestments = this.chkBoxIgnoreAutoInvestments.isSelected(); //todo: Criar controle para a leitura desta flag
+            java.awt.Rectangle ret = controller.saveUpdatedOFX(ignoreAutoInvestments);  //altera os valores reais pelos fakes e salva com sufixo
 
             //verifica se há processamento de fatura de cartão de crédito e gera txt com exportação
             filename = this.edtCreditCardOFX.getText();
@@ -132,8 +142,11 @@ public class FXMLController implements Initializable {
                 int deltaDays = -1 * this.edtCreditCardTresholdDay.getValueFactory().getValue();
                 ccBill.exportTo(ccBill.getDefaultExportFilename(), deltaDays);
             }
-
-            showAlert("Aviso:", "Operação finalizada com sucesso!");
+            StringBuilder sb = new StringBuilder();
+            sb.append("Operação finalizada com sucesso!\n\r");
+            sb.append(String.format("Foram %d transações master, destas %d foram ignoradas.\n\r", ret.x, ret.y));
+            sb.append(String.format("Foram %d transações slave, destas foram %d ignoradas.\n\r", ret.width, ret.height));
+            showAlert("Aviso:", sb.toString());
 
         } catch (Exception exception) {
             showAlert("Alerta de erro", exception.getLocalizedMessage());

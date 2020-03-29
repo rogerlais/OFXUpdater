@@ -31,7 +31,6 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 import org.apache.commons.io.FilenameUtils;
@@ -159,9 +158,9 @@ public class OFXFileHelper {
      */
     public void read() throws IOException, OFXParseException {
         try (
-            FileInputStream fis = new FileInputStream(this.getInputFile());
-            Reader fr = new InputStreamReader(fis, "windows-1252") //Requerido para interpertrar corretamente os dados
-            ) //allocation
+                FileInputStream fis = new FileInputStream(this.getInputFile());
+                Reader fr = new InputStreamReader(fis, "windows-1252") //Requerido para interpertrar corretamente os dados
+                ) //allocation
         {
             AggregateUnmarshaller a = new AggregateUnmarshaller(ResponseEnvelope.class);  //Adapter para serialização
             this.OFXContent = (ResponseEnvelope) a.unmarshal(fr);

@@ -65,6 +65,7 @@ public class GlobalConfig {
     public static final String CC_AMEX_MASTER_ACCOUNT_MASK = "XXXXXXXXXX73008";
 
     public static final String CC_BB_MASTER_ACCOUNT_MASK = "5485000000006565";
+    public static final String AUTO_INVESTMENT_REFNUM = "2";
 
     public static String trimChar(String str, char c) {
         //TODO: Levar para biblioteca
