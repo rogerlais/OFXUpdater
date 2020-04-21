@@ -93,14 +93,11 @@ public class OFXCreditCardBilling {
         }
     }
 
-    private CreditCardStatementResponseTransaction getTransactionList(){
+    public CreditCardTypes getCreditCardType() throws OFXException {
         CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
         CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
-        return masterTransList;
-        
-    }
-    public CreditCardTypes getCreditCardType() throws OFXException {        
-        String AN = this.getTransactionList().getMessage().getAccount().getAccountNumber();
+        String AN = masterTransList.getMessage().getAccount().getAccountNumber();
+        Date resultDate = null;
         if (AN.endsWith(GlobalConfig.CC_AMEX_MASTER_ACCOUNT_MASK)) {  //Amex
             return CreditCardTypes.AMEX;
         } else {  //Ourocard
@@ -115,18 +112,18 @@ public class OFXCreditCardBilling {
     private Date getTresholdDate(int decrementDays) throws OFXException {
         //Abre arquivo e dependendo do emissor (BB ou Amex) infere uma data de compra ótima.
         //Quando houver entrada posterior a registrada no importador(info HC ), alerta com prefixo no mesmo
+        CreditCardResponseMessageSet response = (CreditCardResponseMessageSet) this.OFXContent.getMessageSet(MessageSetType.creditcard);
+        CreditCardStatementResponseTransaction masterTransList = (CreditCardStatementResponseTransaction) response.getResponseMessages().get(0);  //assume 0 = primeiro e master
+        String AN = masterTransList.getMessage().getAccount().getAccountNumber();
         Date resultDate = null;
-        switch (this.getCreditCardType()) {
-            case AMEX: {
-            resultDate = this.getTransactionList().getMessage().getTransactionList().getStart();  //para BB inicia em data anterior as vezes
-                break;
-            }
-            case OUROCARD: {
-                resultDate = this.getTransactionList().getMessage().getLedgerBalance().getAsOfDate();
-                break;
-            }
-            default: {
-                break;
+        if (AN.endsWith(GlobalConfig.CC_AMEX_MASTER_ACCOUNT_MASK)) {  //Amex
+            resultDate = masterTransList.getMessage().getTransactionList().getStart();  //para BB inicia em data anterior as vezes
+        } else {  //Ourocard
+            if (AN.contains(GlobalConfig.CC_BB_MASTER_ACCOUNT_MASK)) {
+                //BB ourocard
+                resultDate = masterTransList.getMessage().getLedgerBalance().getAsOfDate();
+            } else {
+                throw new OFXException("Cartão não localizado na lista de cartões conhecidos para cáculo da data limite");
             }
         }
         if (resultDate != null) {
